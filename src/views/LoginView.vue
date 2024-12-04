@@ -1,0 +1,383 @@
+<template>
+  <!-- 登录/注册容器：使用弹性布局实现居中效果 -->
+  <div class="login-container">
+    <!-- 
+      表单组件：使用 element-plus 的 el-form
+      ref: 用于表单验证
+      :model: 表单数据绑定
+      :rules: 表单验证规则
+     -->
+    <el-form ref="formRef" :model="formData" :rules="rules" label-position="left" label-width="80px" class="login-form">
+      <!-- 动态标题：根据 isLogin 切换显示 -->
+      <h2 class="title">{{ isLogin ? '用户登录' : '用户注册' }}</h2>
+
+      <!-- 登录表单部分 -->
+      <template v-if="isLogin">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="formData.username" placeholder="请输入用户名" prefix-icon="User" />
+        </el-form-item>
+
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password :show-password-on-click="true"/>
+        </el-form-item>
+
+        <!-- 添加用户类型选择 -->
+        <el-form-item label="用户类型" prop="userType">
+          <el-radio-group v-model="formData.userType">
+            <el-radio label="user">普通用户</el-radio>
+            <el-radio label="admin">管理员</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <div class="remember-forgot">
+          <el-checkbox v-model="formData.remember">记住我</el-checkbox>
+          <el-button type="text" @click="handleForgotPassword">忘记密码？</el-button>
+        </div>
+      </template>
+
+      <!-- 注册表单部分 -->
+      <template v-else>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="formData.username" placeholder="请输入用户名" prefix-icon="User" />
+        </el-form-item>
+
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="formData.email" placeholder="请输入邮箱" prefix-icon="Message" />
+        </el-form-item>
+
+        <el-form-item label="手机号码" prop="phone">
+          <el-input v-model="formData.phone" placeholder="请输入手机号码" prefix-icon="Phone" />
+        </el-form-item>
+
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password :show-password-on-click="true"/>
+        </el-form-item>
+
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="formData.confirmPassword" type="password" placeholder="请确认密码" prefix-icon="Lock"
+            show-password :show-password-on-click="true"/>
+        </el-form-item>
+
+        <el-form-item label="个人简介" prop="introduction">
+          <el-input v-model="formData.introduction" type="textarea" :rows="3" placeholder="请输入个人简介" />
+        </el-form-item>
+      </template>
+
+      <!-- 提交按钮 -->
+      <el-form-item>
+        <el-button type="primary" class="submit-btn" @click="handleSubmit">
+          {{ isLogin ? '登录' : '注册' }}
+        </el-button>
+      </el-form-item>
+
+      <!-- 切换登录/注册的链接 -->
+      <div class="switch-type">
+        <span>{{ isLogin ? '没有账号？' : '已有账号？' }}</span>
+        <el-link type="primary" @click="switchLoginType">
+          {{ isLogin ? '立即注册' : '立即登录' }}
+        </el-link>
+      </div>
+    </el-form>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+
+// 控制当前是登录还是注册状态
+const isLogin = ref(true)
+// 表单引用，用于表单验证
+const formRef = ref()
+
+// 表单数据对象：包含所有表单字段
+const formData = reactive({
+  username: '',        // 用户名
+  email: '',          // 邮箱
+  phone: '',          // 手机号
+  password: '',       // 密码
+  confirmPassword: '', // 确认密码
+  introduction: '',   // 个人简介
+  userType: 'user',   // 用户类型：默认为普通用户
+  remember: false     // 记住密码选项
+})
+
+/**
+ * 密码验证规则
+ * 1. 长度至少6位
+ * 2. 必须包含至少两个数字
+ * 3. 不能全为大写或小写字母
+ */
+const validatePassword = (rule, value, callback) => {
+  if (value.length < 6) {
+    callback(new Error('密码长度不能少于6位'))
+    return
+  }
+
+  const hasNumber = /\d.*\d/.test(value)
+
+  if (!hasNumber) {
+    callback(new Error('密码必须包含至少两个数字'))
+    return
+  }
+
+  if (value === value.toLowerCase() || value === value.toUpperCase()) {
+    callback(new Error('密码不能全为大写或小写字母'))
+    return
+  }
+
+  callback()
+}
+
+/**
+ * 确认密码验证
+ * 验证两次输入的密码是否一致
+ */
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== formData.password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+// 定义表单验证规则
+const rules = reactive({
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, message: '用户名长度至少为2位', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { validator: validatePassword, trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ],
+  introduction: [
+    { required: false, message: '请输入个人简介', trigger: 'blur' },
+    { max: 200, message: '简介长度不能超过200字', trigger: 'blur' }
+  ],
+  userType: [
+    { required: true, message: '请选择用户类型', trigger: 'change' }
+  ]
+})
+
+/**
+ * 切换登录/注册状态
+ * 切换时重置表单数据
+ */
+const switchLoginType = () => {
+  isLogin.value = !isLogin.value
+  formRef.value?.resetFields()
+}
+
+/**
+ * 处理忘记密码功能
+ * 当前仅显示提示信息
+ */
+const handleForgotPassword = () => {
+  ElMessage.info('请联系管理员重置密码')
+}
+
+/**
+ * 表单提交处理
+ * 1. 进行表单验证
+ * 2. 验证通过后提交数据
+ */
+const handleSubmit = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate((valid, fields) => {
+    if (valid) {
+      ElMessage.success(isLogin.value ? '登录成功' : '注册成功')
+      console.log('form data:', formData)
+    } else {
+      console.log('error submit:', fields)
+    }
+  })
+}
+</script>
+
+<style scoped>
+/* 登录容器样式：全屏显示，背景图设置 */
+.login-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('../assets/background.png');
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* 登录表单卡片样式：磨砂玻璃效果 */
+.login-form {
+  width: 100%;
+  max-width: 350px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(3px);
+  transition: transform 0.3s ease;
+}
+
+/* 表单悬停动画效果 */
+.login-form:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 标题样式 */
+.title {
+  text-align: center;
+  margin-bottom: 35px;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* 输入框样式自定义 */
+:deep(.el-input) {
+  width: 80%;
+}
+
+/* 输入框容器样式 */
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
+  padding: 0 10px;  /* 减小输入框内边距 */
+}
+
+:deep(.el-input__wrapper:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409eff;
+}
+
+:deep(.el-input__wrapper.is-error) {
+  box-shadow: 0 0 0 1px #f56c6c;
+}
+
+/* 提交按钮样式：渐变背景 */
+.submit-btn {
+  width: 60%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #409eff, #5caaff);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+:deep(.el-radio-group) {
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+:deep(.el-radio__label) {
+  color: #2c3e50;
+}
+
+:deep(.el-radio__input.is-checked .el-radio__inner) {
+  background: #409eff;
+  border-color: #409eff;
+}
+
+.remember-forgot {
+  display: flex;
+  justify-content: center;  /* 改为居中对齐 */
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 50px;  /* 添加间距 */
+}
+
+:deep(.el-checkbox__label) {
+  color: #606266;
+}
+
+.switch-type {
+  text-align: center;
+  margin-top: 25px;
+  color: #606266;
+}
+
+.switch-type .el-link {
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+:deep(.el-textarea .el-textarea__inner) {
+  width: 80%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
+  padding: 5px 10px;  /* 减小文本域内边距 */
+}
+
+:deep(.el-textarea .el-textarea__inner:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+:deep(.el-textarea .el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px #409eff;
+}
+
+:deep(.el-input__password-icon) {
+  font-size: 16px;
+  color: #909399;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+:deep(.el-input__password-icon:hover) {
+  color: #409EFF;
+}
+
+/* 响应式布局适配 */
+@media screen and (max-width: 480px) {
+  .login-form {
+    margin: 15px;
+    padding: 25px;
+    border-radius: 12px;
+  }
+
+  .title {
+    font-size: 24px;
+    margin-bottom: 25px;
+  }
+
+  :deep(.el-form-item) {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+</style>
