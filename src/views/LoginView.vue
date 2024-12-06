@@ -18,7 +18,8 @@
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password :show-password-on-click="true"/>
+          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password
+            :show-password-on-click="true" />
         </el-form-item>
 
         <!-- 添加用户类型选择 -->
@@ -41,8 +42,18 @@
           <el-input v-model="formData.username" placeholder="请输入用户名" prefix-icon="User" />
         </el-form-item>
 
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="formData.email" placeholder="请输入邮箱" prefix-icon="Message" />
+        <!-- 证件类型选择 -->
+        <el-form-item label="证件类型" prop="idType">
+          <el-select v-model="formData.idType" placeholder="请选择证件类型">
+            <el-option label="身份证" value="ID_CARD" />
+            <el-option label="护照" value="PASSPORT" />
+            <el-option label="军官证" value="MILITARY_ID" />
+          </el-select>
+        </el-form-item>
+
+        <!-- 证件号码输入 -->
+        <el-form-item label="证件号码" prop="idNumber">
+          <el-input v-model="formData.idNumber" :placeholder="getIdNumberPlaceholder" prefix-icon="Document" />
         </el-form-item>
 
         <el-form-item label="手机号码" prop="phone">
@@ -50,12 +61,13 @@
         </el-form-item>
 
         <el-form-item label="密码" prop="password">
-          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password :show-password-on-click="true"/>
+          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password
+            :show-password-on-click="true" />
         </el-form-item>
 
         <el-form-item label="确认密码" prop="confirmPassword">
           <el-input v-model="formData.confirmPassword" type="password" placeholder="请确认密码" prefix-icon="Lock"
-            show-password :show-password-on-click="true"/>
+            show-password :show-password-on-click="true" />
         </el-form-item>
 
         <el-form-item label="个人简介" prop="introduction">
@@ -82,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 
 // 控制当前是登录还是注册状态
@@ -93,7 +105,8 @@ const formRef = ref()
 // 表单数据对象：包含所有表单字段
 const formData = reactive({
   username: '',        // 用户名
-  email: '',          // 邮箱
+  idType: '',          // 证件类型
+  idNumber: '',        // 证件号码
   phone: '',          // 手机号
   password: '',       // 密码
   confirmPassword: '', // 确认密码
@@ -101,6 +114,46 @@ const formData = reactive({
   userType: 'user',   // 用户类型：默认为普通用户
   remember: false     // 记住密码选项
 })
+
+// 获取证件号码输入提示
+const getIdNumberPlaceholder = computed(() => {
+  switch (formData.idType) {
+    case 'ID_CARD':
+      return '请输入18位身份证号码'
+    case 'PASSPORT':
+      return '请输入护照号码'
+    case 'MILITARY_ID':
+      return '请输入军官证号码'
+    default:
+      return '请输入证件号码'
+  }
+})
+
+// 证件号码验证规则
+const validateIdNumber = (rule, value, callback) => {
+  if (!value) {
+    return callback(new Error('请输入证件号码'))
+  }
+  
+  switch (formData.idType) {
+    case 'ID_CARD':
+      if (!/^\d{17}[\dXx]$/.test(value)) {
+        callback(new Error('请输入正确的身份证号码'))
+      }
+      break
+    case 'PASSPORT':
+      if (!/^[A-Za-z0-9]{8,}$/.test(value)) {
+        callback(new Error('请输入正确的护照号码'))
+      }
+      break
+    case 'MILITARY_ID':
+      if (!/^[A-Za-z0-9]{7,}$/.test(value)) {
+        callback(new Error('请输入正确的军官证号码'))
+      }
+      break
+  }
+  callback()
+}
 
 /**
  * 密码验证规则
@@ -147,9 +200,12 @@ const rules = reactive({
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 2, message: '用户名长度至少为2位', trigger: 'blur' }
   ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+  idType: [
+    { required: true, message: '请选择证件类型', trigger: 'change' }
+  ],
+  idNumber: [
+    { required: true, message: '请输入证件号码', trigger: 'blur' },
+    { validator: validateIdNumber, trigger: 'blur' }
   ],
   phone: [
     { required: true, pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
@@ -247,9 +303,23 @@ const handleSubmit = async () => {
   letter-spacing: 1px;
 }
 
-/* 输入框样式自定义 */
 :deep(.el-input) {
   width: 80%;
+}
+
+:deep(.el-select){
+  width: 80%;
+}
+
+:deep(.el-select__wrapper) {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
+  padding: 0 10px;
+}
+
+:deep(.el-select__wrapper:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* 输入框容器样式 */
@@ -257,7 +327,6 @@ const handleSubmit = async () => {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.3s ease;
-  padding: 0 10px;  /* 减小输入框内边距 */
 }
 
 :deep(.el-input__wrapper:hover) {
