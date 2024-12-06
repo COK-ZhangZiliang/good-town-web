@@ -93,6 +93,43 @@
   </div>
 </template>
 
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      isLogin: true,
+      formData: {
+        username: '',
+        password: '',
+        userType: 'user'
+      }
+    };
+  },
+  methods: {
+    async login() {
+      try {
+        const response = await axios.post('http://localhost:8088/api/users/login', {
+          username: this.formData.username,
+          password: this.formData.password
+        });
+        if (response.data.status === 'success') {
+          this.$message.success(response.data.message);
+          // 处理成功登录后的逻辑，例如保存 token，跳转页面等
+          console.log(response.data.data);
+        } else {
+          this.$message.error(response.data.message);
+        }
+      } catch (error) {
+        this.$message.error('登录失败，请稍后再试');
+        console.error(error);
+      }
+    }
+  }
+};
+</script>
+
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
