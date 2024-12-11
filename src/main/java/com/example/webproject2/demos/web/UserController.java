@@ -153,16 +153,27 @@ public class UserController {
 
     // 修改个人信息接口
     @PutMapping("/update")
-    public ResponseEntity<?> updateUserInfo(@RequestBody UserUpdateRequest updateRequest) {
-        // 校验请求参数
-        if (updateRequest.getToken() == null || updateRequest.getToken().isEmpty()) {
+    public ResponseEntity<?> updateUserInfo(
+            @RequestHeader(value = "token", required = false) String headerToken,
+            @RequestBody UserUpdateRequest updateRequest) {
+
+        // 优先从请求头中获取 token
+        String token = headerToken;
+
+        // 如果头部中没有 token，再从请求体中获取
+        if ((token == null || token.isEmpty()) && updateRequest.getToken() != null) {
+            token = updateRequest.getToken();
+        }
+
+        // 如果 token 仍然为空，返回错误
+        if (token == null || token.isEmpty()) {
             System.out.println("认证失败或请求参数错误");
             UserResponse errorResponse = new UserResponse("error", "认证失败或请求参数错误", (UserResponse.UserData) null);
             return ResponseEntity.status(400).body(errorResponse);
         }
 
         // 验证 token
-        Integer userId = TokenService.validateToken(updateRequest.getToken());
+        Integer userId = TokenService.validateToken(token);
         if (userId == null) {
             System.out.println("认证失败，token无效");
             UserResponse errorResponse = new UserResponse("error", "认证失败，token无效", (UserResponse.UserData) null);
@@ -179,7 +190,7 @@ public class UserController {
 
         Users user = userOptional.get();
 
-        // 更新用户信息
+        // 更新用户信息的逻辑（与之前一致）
         if (updateRequest.getIdType() != null) {
             System.out.println("ID Type: " + updateRequest.getIdType());
             user.setIdType(updateRequest.getIdType());
