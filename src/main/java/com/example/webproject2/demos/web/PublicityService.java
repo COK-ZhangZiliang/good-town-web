@@ -16,4 +16,16 @@ public class PublicityService {
         return publicityRepository.findByUserIdAndStatus(userId, 0);
     }
 
+
+    public Publicity addPublicity(Publicity publicity) {
+        return publicityRepository.save(publicity);
+    }
+
+
+    public boolean existsByUserIdAndTownId(Integer userId, Integer townId) {
+        return publicityRepository.existsByUserIdAndTownId(userId, townId);
+    }
+
+
+
 }
