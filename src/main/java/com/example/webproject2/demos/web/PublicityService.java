@@ -27,5 +27,7 @@ public class PublicityService {
     }
 
 
-
+    public Publicity getPublicityById(Integer publicityId) {
+        return publicityRepository.findById(publicityId).orElse(null);
+    }
 }
