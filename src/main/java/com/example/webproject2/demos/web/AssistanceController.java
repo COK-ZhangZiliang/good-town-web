@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Map;
 
 @RestController
@@ -59,6 +58,16 @@ public class AssistanceController {
             if (assistance == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("status", "error", "message", "Assistance not found"));
+            }
+
+            // 如果是接受操作，检查是否已存在成功记录，避免重复同意
+            if (action == 1) {
+                boolean alreadyAccepted = assistanceSuccessService
+                        .existsByAssistanceIdAndAssistanceUserId(assistanceId, assistance.getUserId());
+                if (alreadyAccepted) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("status", "error", "message", "Assistance request already accepted"));
+                }
             }
 
             // 验证是否是该用户发布的宣传信息

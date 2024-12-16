@@ -2,7 +2,6 @@ package com.example.webproject2.demos.web;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +24,9 @@ public class PublicityController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PublicityRepository publicityRepository;
 
     // 查询自己所有的宣传信息
     @GetMapping("/my")
@@ -115,7 +117,7 @@ public class PublicityController {
             publicity.setDescription(description);
             publicity.setImageUrl(imageUrl);
             publicity.setVideoUrl(videoUrl);
-            publicity.setStatus(0);
+            publicity.setStatus(-1); // 默认状态为未发布，如果需要发布则调用发布接口
 
             // 设置时间字段
             LocalDateTime now = LocalDateTime.now();
@@ -157,7 +159,7 @@ public class PublicityController {
             }
 
             // 查询用户发布的所有宣传信息
-            List<Publicity> publicityList = publicityService.getMyPublicity(userId);
+            List<Publicity> publicityList = publicityService.getReleasedPublicity(userId);
             if (publicityList == null || publicityList.isEmpty()) {
                 return ResponseEntity.ok(Map.of("status", "success", "data", Collections.emptyList()));
             }
@@ -208,5 +210,129 @@ public class PublicityController {
 
 
     // 修改宣传信息
-//    @PutMapping("/update/{publicityId}")
+    @PutMapping("/update/{publicityId}")
+    public ResponseEntity<?> updatePublicity(@RequestHeader("token") String token,
+                                             @PathVariable Integer publicityId,
+                                             @RequestBody Map<String, Object> requestData) {
+        try {
+            // 验证 token 并获取 userId
+            Integer userId = TokenService.validateToken(token);
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("status", "error", "message", "Invalid token"));
+            }
+
+            // 获取要修改的宣传信息
+            Publicity publicity = publicityService.getPublicityById(publicityId);
+            if (publicity == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("status", "error", "message", "Publicity not found"));
+            }
+
+            // 确保用户只能修改自己发布的宣传信息
+            if (!publicity.getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("status", "error", "message", "You do not have permission to edit this publicity"));
+            }
+
+            Integer status = (Integer) requestData.get("status");
+
+            // 需要验证是否有待处理的助力请求
+            List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicityId);
+            for (Assistance assistance : assistanceRequests) {
+                if (assistance.getStatus() == 0) { // 如果存在待接受的助力请求
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("status", "error", "message", "Cannot publish publicity with active assistance requests"));
+                }
+            }
+
+            // 更新宣传信息
+            if (requestData.get("title") != null) {
+                publicity.setTitle((String) requestData.get("title"));
+            }
+            if (requestData.get("description") != null) {
+                publicity.setDescription((String) requestData.get("description"));
+            }
+            if (requestData.get("image_url") != null) {
+                publicity.setImageUrl((String) requestData.get("image_url"));
+            }
+            if (requestData.get("video_url") != null) {
+                publicity.setVideoUrl((String) requestData.get("video_url"));
+            }
+            if (status != null) {
+                publicity.setStatus(status);
+            }
+
+            // 更新时间
+            publicity.setUpdatedAt(LocalDateTime.now());
+
+            // 保存修改后的宣传信息
+            publicityService.addPublicity(publicity);
+
+            // 返回修改后的数据
+            Map<String, Object> publicityData = new HashMap<>();
+            publicityData.put("publicity_id", publicity.getPublicityId());
+            publicityData.put("user_id", publicity.getUserId());
+            publicityData.put("town_id", publicity.getTownId());
+            publicityData.put("type", publicity.getType());
+            publicityData.put("title", publicity.getTitle());
+            publicityData.put("description", publicity.getDescription());
+            publicityData.put("image_url", publicity.getImageUrl());
+            publicityData.put("video_url", publicity.getVideoUrl());
+            publicityData.put("status", publicity.getStatus());
+            publicityData.put("created_at", publicity.getCreatedAt());
+            publicityData.put("updated_at", publicity.getUpdatedAt());
+
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity updated successfully!", "data", publicityData));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+
+    // 删除宣传信息
+    @DeleteMapping("/delete/{publicityId}")
+    public ResponseEntity<?> deletePublicity(@RequestHeader("token") String token,
+                                             @PathVariable Integer publicityId) {
+        try {
+            // 验证 token 并获取 userId
+            Integer userId = TokenService.validateToken(token);
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("status", "error", "message", "Invalid token"));
+            }
+
+            // 查询宣传信息
+            Publicity publicity = publicityService.getPublicityById(publicityId);
+            if (publicity == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("status", "error", "message", "Publicity not found"));
+            }
+
+            // 验证该宣传信息是否属于当前用户
+            if (!publicity.getUserId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("status", "error", "message", "You do not have permission to delete this publicity"));
+            }
+
+            // 检查该宣传信息是否有待处理的助力请求
+            List<Assistance> assistanceList = assistanceService.getAssistanceByPublicityId(publicityId);
+            for (Assistance assistance : assistanceList) {
+                if (assistance.getStatus() == 0 || assistance.getStatus() == 1 || assistance.getStatus() == 2) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("status", "error", "message", "Cannot delete publicity with active assistance requests"));
+                }
+            }
+
+            // 删除宣传信息
+            publicityRepository.delete(publicity);
+
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
 }

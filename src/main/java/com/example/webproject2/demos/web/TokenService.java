@@ -20,7 +20,7 @@ public class TokenService {
                 .withSubject(username)
                 .withClaim("userId", userId)
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 3600000)) // 1小时过期
+                .withExpiresAt(new Date(System.currentTimeMillis() + 3600000 * 3)) // 3小时过期
                 .sign(algorithm);
     }
 

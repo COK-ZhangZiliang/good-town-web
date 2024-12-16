@@ -12,4 +12,10 @@ public class AssistanceSuccessService {
     public void saveAssistanceSuccess(AssistanceSuccess success) {
         assistanceSuccessRepository.save(success);
     }
+
+    public boolean existsByAssistanceIdAndAssistanceUserId(Integer assistanceId, Integer assistanceUserId) {
+        // 数据库查询，验证是否已存在对应记录
+        return assistanceSuccessRepository.existsByAssistanceIdAndAssistanceUserId(assistanceId, assistanceUserId);
+    }
+
 }

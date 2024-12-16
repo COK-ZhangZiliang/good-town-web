@@ -9,6 +9,9 @@ import java.util.List;
 public interface PublicityRepository extends JpaRepository<Publicity, Integer> {
     List<Publicity> findByUserIdAndStatus(Integer userId, Integer status);
 
+    List<Publicity> findByUserIdAndStatusIn(Integer userId, List<Integer> statuses);
+
+
     boolean existsByUserIdAndTownId(Integer userId, Integer townId);
 
 }
