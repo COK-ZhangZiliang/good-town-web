@@ -25,4 +25,21 @@ public class AssistanceService {
         assistanceRepository.save(assistance);
     }
 
+    // 根据用户ID查询助力请求
+    public List<Assistance> getAssistanceByUserId(Integer userId) {
+        return assistanceRepository.findByUserId(userId);
+    }
+
+
+    public void saveAssistance(Assistance newAssistance) {
+        assistanceRepository.save(newAssistance);
+    }
+
+    public boolean existsByPublicityIdAndUserId(Integer publicityId, Integer userId) {
+        return assistanceRepository.existsByPublicityIdAndUserId(publicityId, userId);
+    }
+
+    public void deleteAssistanceById(Integer assistanceId) {
+        assistanceRepository.deleteById(assistanceId);
+    }
 }

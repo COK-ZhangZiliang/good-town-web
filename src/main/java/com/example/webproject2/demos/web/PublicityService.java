@@ -40,5 +40,9 @@ public class PublicityService {
         return publicityRepository.findById(publicityId).orElse(null);
     }
 
+    public List<Publicity> getPublicityByStatus(Integer status) {
+        // 根据状态查询宣传信息(status = 0: 已发布, status = -1: 取消发布)
+        return publicityRepository.findByStatus(status);
+    }
 
 }
