@@ -1,5 +1,4 @@
 <template>
-  <!-- 登录/注册容器：使用弹性布局实现居中效果 -->
   <div class="login-container">
     <!-- 
       表单组件：使用 element-plus 的 el-form
@@ -22,14 +21,6 @@
             :show-password-on-click="true" />
         </el-form-item>
 
-        <!-- 添加用户类型选择 -->
-        <el-form-item label="用户类型" prop="userType">
-          <el-radio-group v-model="formData.userType">
-            <el-radio label="user">普通用户</el-radio>
-            <el-radio label="admin">管理员</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
         <div class="remember-forgot">
           <el-checkbox v-model="formData.remember">记住我</el-checkbox>
           <el-button type="text" @click="handleForgotPassword">忘记密码？</el-button>
@@ -42,7 +33,10 @@
           <el-input v-model="formData.username" placeholder="请输入用户名" prefix-icon="User" />
         </el-form-item>
 
-        <!-- 证件类型选择 -->
+        <el-form-item label="用户姓名" prop="name">
+          <el-input v-model="formData.name" placeholder="请输入用户姓名" prefix-icon="User" />
+        </el-form-item>
+
         <el-form-item label="证件类型" prop="idType">
           <el-select v-model="formData.idType" placeholder="请选择证件类型">
             <el-option label="身份证" value="ID_CARD" />
@@ -51,7 +45,6 @@
           </el-select>
         </el-form-item>
 
-        <!-- 证件号码输入 -->
         <el-form-item label="证件号码" prop="idNumber">
           <el-input v-model="formData.idNumber" :placeholder="getIdNumberPlaceholder" prefix-icon="Document" />
         </el-form-item>
@@ -60,8 +53,8 @@
           <el-input v-model="formData.phone" placeholder="请输入手机号码" prefix-icon="Phone" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="formData.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password
+        <el-form-item label="密码" prop="registerPassword">
+          <el-input v-model="formData.registerPassword" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password
             :show-password-on-click="true" />
         </el-form-item>
 
@@ -93,46 +86,10 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-
-export default {
-  data() {
-    return {
-      isLogin: true,
-      formData: {
-        username: '',
-        password: '',
-        userType: 'user'
-      }
-    };
-  },
-  methods: {
-    async login() {
-      try {
-        const response = await axios.post('http://localhost:8088/api/users/login', {
-          username: this.formData.username,
-          password: this.formData.password
-        });
-        if (response.data.status === 'success') {
-          this.$message.success(response.data.message);
-          // 处理成功登录后的逻辑，例如保存 token，跳转页面等
-          console.log(response.data.data);
-        } else {
-          this.$message.error(response.data.message);
-        }
-      } catch (error) {
-        this.$message.error('登录失败，请稍后再试');
-        console.error(error);
-      }
-    }
-  }
-};
-</script>
-
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 // 控制当前是登录还是注册状态
 const isLogin = ref(true)
@@ -142,13 +99,14 @@ const formRef = ref()
 // 表单数据对象：包含所有表单字段
 const formData = reactive({
   username: '',        // 用户名
+  name: '',            // 用户姓名
   idType: '',          // 证件类型
   idNumber: '',        // 证件号码
   phone: '',          // 手机号
   password: '',       // 密码
+  registerPassword: '', //注册密码
   confirmPassword: '', // 确认密码
   introduction: '',   // 个人简介
-  userType: 'user',   // 用户类型：默认为普通用户
   remember: false     // 记住密码选项
 })
 
@@ -171,7 +129,7 @@ const validateIdNumber = (rule, value, callback) => {
   if (!value) {
     return callback(new Error('请输入证件号码'))
   }
-  
+
   switch (formData.idType) {
     case 'ID_CARD':
       if (!/^\d{17}[\dXx]$/.test(value)) {
@@ -224,7 +182,7 @@ const validatePassword = (rule, value, callback) => {
  * 验证两次输入的密码是否一致
  */
 const validateConfirmPassword = (rule, value, callback) => {
-  if (value !== formData.password) {
+  if (value !== formData.registerPassword) {
     callback(new Error('两次输入的密码不一致'))
   } else {
     callback()
@@ -237,6 +195,10 @@ const rules = reactive({
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 2, message: '用户名长度至少为2位', trigger: 'blur' }
   ],
+  name: [
+    { required: true, message: '请输入用户姓名', trigger: 'blur' },
+    { min: 2, message: '用户姓名长度至少为2位', trigger: 'blur' }
+  ],
   idType: [
     { required: true, message: '请选择证件类型', trigger: 'change' }
   ],
@@ -248,6 +210,9 @@ const rules = reactive({
     { required: true, pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
   password: [
+    {required: true, message: '请输入密码', trigger: 'blur'},
+  ],
+  registerPassword: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { validator: validatePassword, trigger: 'blur' }
   ],
@@ -258,9 +223,6 @@ const rules = reactive({
   introduction: [
     { required: false, message: '请输入个人简介', trigger: 'blur' },
     { max: 200, message: '简介长度不能超过200字', trigger: 'blur' }
-  ],
-  userType: [
-    { required: true, message: '请选择用户类型', trigger: 'change' }
   ]
 })
 
@@ -281,21 +243,66 @@ const handleForgotPassword = () => {
   ElMessage.info('请联系管理员重置密码')
 }
 
-/**
- * 表单提交处理
- * 1. 进行表单验证
- * 2. 验证通过后提交数据
- */
+// 登录方法
+const login = async () => {
+  try {
+    const response = await axios.post('http://localhost:8088/api/users/login', {
+      username: formData.username,
+      password: formData.password
+    })
+    if (response.data.status === 'success') {
+      ElMessage.success(response.data.message)
+      console.log(response.data)
+    } else {
+      ElMessage.error(response.data.message)
+      console.error(response.data)
+    }
+  } catch (error) {
+    ElMessage.error('登录失败，请稍后再试')
+    console.error(error)
+  }
+}
+
+// 注册方法
+const register = async () => {
+  try {
+    const response = await axios.post('http://localhost:8088/api/users/register', {
+      username: formData.username,
+      name: formData.name,
+      password: formData.registerPassword,
+      idType: formData.idType,
+      idNumber: formData.idNumber,
+      phone: formData.phone,
+      bio: formData.introduction
+    })
+    if (response.data.status === 'success') {
+      ElMessage.success('注册成功！')
+      console.log(response.data)
+      isLogin.value = true
+    } else {
+      ElMessage.error(response.data.message)
+      console.error(response.data)
+    }
+  } catch (error) {
+    ElMessage.error('注册失败，请稍后再试')
+    console.error(error)
+  }
+}
+
+// 表单提交处理
 const handleSubmit = async () => {
   if (!formRef.value) return
-  await formRef.value.validate((valid, fields) => {
-    if (valid) {
-      ElMessage.success(isLogin.value ? '登录成功' : '注册成功')
-      console.log('form data:', formData)
+  
+  try {
+    await formRef.value.validate()
+    if (isLogin.value) {
+      await login()
     } else {
-      console.log('error submit:', fields)
+      await register()
     }
-  })
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  }
 }
 </script>
 
@@ -344,7 +351,7 @@ const handleSubmit = async () => {
   width: 80%;
 }
 
-:deep(.el-select){
+:deep(.el-select) {
   width: 80%;
 }
 
@@ -418,10 +425,12 @@ const handleSubmit = async () => {
 
 .remember-forgot {
   display: flex;
-  justify-content: center;  /* 改为居中对齐 */
+  justify-content: center;
+  /* 改为居中对齐 */
   align-items: center;
   margin-bottom: 20px;
-  gap: 50px;  /* 添加间距 */
+  gap: 50px;
+  /* 添加间距 */
 }
 
 :deep(.el-checkbox__label) {
@@ -444,7 +453,8 @@ const handleSubmit = async () => {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.3s ease;
-  padding: 5px 10px;  /* 减小文本域内边距 */
+  padding: 5px 10px;
+  /* 减小文本域内边距 */
 }
 
 :deep(.el-textarea .el-textarea__inner:hover) {
