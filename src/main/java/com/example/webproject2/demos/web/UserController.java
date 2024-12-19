@@ -17,6 +17,7 @@ import java.util.*;
 @RestController
 @Transactional
 @RequestMapping("/api/users")
+@CrossOrigin
 public class UserController {
 
     @Autowired
@@ -59,7 +60,7 @@ public class UserController {
 
             // 用户名已存在
             UserResponse errorResponse = new UserResponse("error", "用户名已存在", "USER_ALREADY_EXISTS", 400);
-            return ResponseEntity.status(400).body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         // 创建新用户
@@ -103,7 +104,7 @@ public class UserController {
             // 用户名不存在
             System.out.println("用户名不存在");
             UserResponse errorResponse = new UserResponse("error", "用户名错误", (UserResponse.UserData) null);
-            return ResponseEntity.status(400).body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         Users user = existingUser.get();
@@ -113,7 +114,7 @@ public class UserController {
             // 密码错误
             System.out.println("密码错误");
             UserResponse errorResponse = new UserResponse("error", "密码错误", (UserResponse.UserData) null);
-            return ResponseEntity.status(400).body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         System.out.println("登录成功");
@@ -185,7 +186,7 @@ public class UserController {
         if (userOptional.isEmpty()) {
             System.out.println("用户不存在");
             UserResponse errorResponse = new UserResponse("error", "用户不存在", (UserResponse.UserData) null);
-            return ResponseEntity.status(404).body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         Users user = userOptional.get();
@@ -213,7 +214,7 @@ public class UserController {
         } else if (updateRequest.getPassword() != null) {
             System.out.println("密码至少6位并包含至少2个数字");
             UserResponse errorResponse = new UserResponse("error", "密码至少6位并包含至少2个数字", (UserResponse.UserData) null);
-            return ResponseEntity.status(400).body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         // 保存更新后的用户信息
