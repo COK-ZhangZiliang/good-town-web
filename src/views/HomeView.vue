@@ -6,7 +6,7 @@
         <!-- 未登录显示登录注册链接，已登录显示用户头像 -->
         <div v-if="!isLoggedIn" class="auth-links">
           <router-link to="/login" class="login-link">
-            <el-avatar :size="40" src="src/assets/default-avatar.png">
+            <el-avatar :size="50">
               <el-icon>
                 <UserFilled />
               </el-icon>
@@ -17,7 +17,7 @@
         <div v-else class="user-info">
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="el-dropdown-link">
-              <el-avatar :size="40" :src="userAvatar" />
+              <el-avatar :size="50" :src="userAvatar" />
               <span class="username">{{ formData.username }}</span>
             </span>
             <template #dropdown>
@@ -45,12 +45,26 @@
             </el-icon>
             <span>我助力</span>
           </el-menu-item>
-          <el-menu-item index="promote">
-            <el-icon>
-              <Promotion />
-            </el-icon>
-            <span>我宣传</span>
-          </el-menu-item>
+          <el-sub-menu index="promote">
+            <template #title>
+              <el-icon>
+                <Promotion />
+              </el-icon>
+              <span>我宣传</span>
+            </template>
+            <el-menu-item index="myPromotions">
+              <el-icon>
+                <Document />
+              </el-icon>
+              <span>我的宣传</span>
+            </el-menu-item>
+            <el-menu-item index="createPromotion">
+              <el-icon>
+                <Plus />
+              </el-icon>
+              <span>发布宣传</span>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </div>
 
@@ -89,7 +103,7 @@
   </div>
 
   <!--修改个人信息-->>
-  <el-dialog v-model="dialogVisible" title="修改个人信息" width="480px" :close-on-click-modal="false"
+  <el-dialog v-model="updateVisible" title="修改个人信息" width="480px" :close-on-click-modal="false"
     custom-class="profile-dialog">
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="90px" class="profile-form">
       <el-form-item label="用户名">
@@ -116,11 +130,14 @@
     </el-form>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button @click="updateVisible = false">取 消</el-button>
         <el-button type="primary" @click="handleUpdateProfile">确 认</el-button>
       </div>
     </template>
   </el-dialog>
+
+  <!-- 发布宣传 -->>
+  <PublicityComp v-model:visible="promoteVisible" />
 </template>
 
 <script setup>
@@ -131,6 +148,7 @@ import { UserFilled, Star, Promotion, Histogram } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
+import PublicityComp from '@/components/PublicityComp.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
@@ -138,8 +156,9 @@ const userAvatar = ref('')
 const searchQuery = ref('')
 const activeMenu = ref('help')
 const router = useRouter()
-const dialogVisible = ref(false)
+const updateVisible = ref(false)
 var token = ''
+const promoteVisible = ref(false)
 
 const formData = reactive({
   username: '',        // 用户名
@@ -267,6 +286,9 @@ const handleSearch = () => {
 // 处理菜单选择
 const handleMenuSelect = (index) => {
   activeMenu.value = index
+  if (index === 'createPromotion') {
+    promoteVisible.value = true
+  }
 }
 
 // 处理点击头像后的下拉菜单选项
@@ -278,7 +300,7 @@ const handleCommand = (command) => {
     ElMessage.success('退出登录成功')
   }
   else if (command === 'profile') {
-    dialogVisible.value = true
+    updateVisible.value = true
   }
 }
 
@@ -288,7 +310,7 @@ const handleUpdateProfile = async () => {
   try {
     await formRef.value.validate()
     await updateInfo()
-    dialogVisible.value = false
+    updateVisible.value = false
   } catch (error) {
     console.error('表单验证失败:', error)
   }
@@ -375,9 +397,20 @@ $hot-color: #ff6b6b;
   width: 200px;
   background-color: white;
   border-right: 1px solid $border-color;
+  padding: 10px;
 
   .nav-menu {
-    border-right: none;
+
+    .el-menu-item,
+    .el-sub-menu__title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .el-icon {
+        margin-right: 4px;
+      }
+    }
   }
 }
 
