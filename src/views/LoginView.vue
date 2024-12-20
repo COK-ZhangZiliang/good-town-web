@@ -94,10 +94,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted} from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { setToken } from '@/utils/auth'
 
 const router = useRouter()
 
@@ -300,9 +301,13 @@ const login = async () => {
       password: formData.password
     })
     if (response.data.status === 'success') {
+      // 存储token
+      setToken(response.data.data.token)
       ElMessage.success(response.data.message)
       console.log(response.data)
-      router.push('/home')
+      router.push({
+        path: '/home'
+      })
     } else {
       ElMessage.error(response.data.message)
       console.error(response.data)
