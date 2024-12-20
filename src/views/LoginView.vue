@@ -97,6 +97,9 @@
 import { ref, reactive, computed, onMounted} from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 控制当前是登录还是注册状态
 const isLogin = ref(true)
@@ -299,6 +302,7 @@ const login = async () => {
     if (response.data.status === 'success') {
       ElMessage.success(response.data.message)
       console.log(response.data)
+      router.push('/home')
     } else {
       ElMessage.error(response.data.message)
       console.error(response.data)
