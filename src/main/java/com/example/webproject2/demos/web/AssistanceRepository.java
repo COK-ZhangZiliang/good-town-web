@@ -8,4 +8,8 @@ import java.util.List;
 @Repository
 public interface AssistanceRepository extends JpaRepository<Assistance, Integer> {
     List<Assistance> findByPublicityId(Integer publicityId);
+
+    List<Assistance> findByUserId(Integer userId);
+
+    boolean existsByPublicityIdAndUserId(Integer publicityId, Integer userId);
 }

@@ -14,6 +14,7 @@ public interface PublicityRepository extends JpaRepository<Publicity, Integer> {
 
     boolean existsByUserIdAndTownId(Integer userId, Integer townId);
 
+    List<Publicity> findByStatus(Integer status);
 }
 
 

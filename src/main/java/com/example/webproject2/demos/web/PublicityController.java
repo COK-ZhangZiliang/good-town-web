@@ -335,4 +335,63 @@ public class PublicityController {
         }
     }
 
+
+    // 查询系统中所有已发布的宣传信息
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllPublicity() {
+        try {
+            // 查询所有状态为已发布（status = 0）的宣传信息
+            List<Publicity> publicityList = publicityService.getPublicityByStatus(0);
+
+            List<Map<String, Object>> responseData = new ArrayList<>();
+            for (Publicity publicity : publicityList) {
+                Map<String, Object> publicityData = new HashMap<>();
+                publicityData.put("publicity_id", publicity.getPublicityId());
+                publicityData.put("town_id", publicity.getTownId());
+                publicityData.put("title", publicity.getTitle());
+                publicityData.put("type", publicity.getType());
+                publicityData.put("description", publicity.getDescription());
+                publicityData.put("image_url", publicity.getImageUrl());
+                publicityData.put("video_url", publicity.getVideoUrl());
+                publicityData.put("created_at", publicity.getCreatedAt());
+                publicityData.put("updated_at", publicity.getUpdatedAt());
+                responseData.add(publicityData);
+            }
+
+            return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+    // 查询宣传的详细信息
+    @GetMapping("/{publicityId}")
+    public ResponseEntity<?> getPublicityDetails(@PathVariable Integer publicityId) {
+        try {
+            Publicity publicity = publicityService.getPublicityById(publicityId);
+            if (publicity == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("status", "error", "message", "Publicity not found"));
+            }
+
+            Map<String, Object> publicityData = new HashMap<>();
+            publicityData.put("publicity_id", publicity.getPublicityId());
+            publicityData.put("town_id", publicity.getTownId());
+            publicityData.put("title", publicity.getTitle());
+            publicityData.put("type", publicity.getType());
+            publicityData.put("description", publicity.getDescription());
+            publicityData.put("image_url", publicity.getImageUrl());
+            publicityData.put("video_url", publicity.getVideoUrl());
+            publicityData.put("created_at", publicity.getCreatedAt());
+            publicityData.put("updated_at", publicity.getUpdatedAt());
+
+            return ResponseEntity.ok(Map.of("status", "success", "data", publicityData));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+
 }
