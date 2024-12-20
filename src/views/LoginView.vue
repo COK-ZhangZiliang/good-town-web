@@ -21,6 +21,13 @@
             :show-password-on-click="true" />
         </el-form-item>
 
+        <el-form-item label="验证码" prop="captcha">
+          <div class="captcha-wrapper">
+            <el-input v-model="formData.captcha" placeholder="请输入验证码" class="captcha-input" />
+            <div class="captcha-code" @click="refreshCaptcha" v-html="captchaHtml"></div>
+          </div>
+        </el-form-item>
+
         <div class="remember-forgot">
           <el-checkbox v-model="formData.remember">记住我</el-checkbox>
           <el-button type="text" @click="handleForgotPassword">忘记密码？</el-button>
@@ -54,8 +61,8 @@
         </el-form-item>
 
         <el-form-item label="密码" prop="registerPassword">
-          <el-input v-model="formData.registerPassword" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password
-            :show-password-on-click="true" />
+          <el-input v-model="formData.registerPassword" type="password" placeholder="请输入密码" prefix-icon="Lock"
+            show-password :show-password-on-click="true" />
         </el-form-item>
 
         <el-form-item label="确认密码" prop="confirmPassword">
@@ -87,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted} from 'vue'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
@@ -95,6 +102,35 @@ import axios from 'axios'
 const isLogin = ref(true)
 // 表单引用，用于表单验证
 const formRef = ref()
+// 添加验证码相关数据
+const captchaHtml = ref('')
+const captchaText = ref('')
+
+// 生成验证码
+const generateCaptcha = () => {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  captchaText.value = Array.from({ length: 4 }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join('')
+
+  const colors = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C']
+  captchaHtml.value = captchaText.value.split('').map(char => {
+    const color = colors[Math.floor(Math.random() * colors.length)]
+    const rotate = Math.random() * 30 - 15
+    return `<span style="color:${color};transform:rotate(${rotate}deg)">${char}</span>`
+  }).join('')
+}
+
+// 刷新验证码
+const refreshCaptcha = () => {
+  generateCaptcha()
+  formData.captcha = ''
+}
+
+// 在组件挂载时生成验证码
+onMounted(() => {
+  generateCaptcha()
+})
 
 // 表单数据对象：包含所有表单字段
 const formData = reactive({
@@ -107,7 +143,8 @@ const formData = reactive({
   registerPassword: '', //注册密码
   confirmPassword: '', // 确认密码
   introduction: '',   // 个人简介
-  remember: false     // 记住密码选项
+  remember: false,     // 记住密码选项
+  captcha: ''          // 验证码
 })
 
 // 获取证件号码输入提示
@@ -210,7 +247,7 @@ const rules = reactive({
     { required: true, pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
   password: [
-    {required: true, message: '请输入密码', trigger: 'blur'},
+    { required: true, message: '请输入密码', trigger: 'blur' },
   ],
   registerPassword: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -223,6 +260,9 @@ const rules = reactive({
   introduction: [
     { required: false, message: '请输入个人简介', trigger: 'blur' },
     { max: 200, message: '简介长度不能超过200字', trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
 })
 
@@ -245,6 +285,12 @@ const handleForgotPassword = () => {
 
 // 登录方法
 const login = async () => {
+  if (formData.captcha.toLowerCase() !== captchaText.value.toLowerCase()) {
+    ElMessage.error('验证码错误，请重新输入')
+    refreshCaptcha()
+    return
+  }
+  refreshCaptcha()
   try {
     const response = await axios.post('http://localhost:8088/api/users/login', {
       username: formData.username,
@@ -292,7 +338,7 @@ const register = async () => {
 // 表单提交处理
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     if (isLogin.value) {
@@ -495,5 +541,29 @@ const handleSubmit = async () => {
     flex-direction: column;
     align-items: center;
   }
+}
+
+.captcha-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.captcha-input {
+  flex: 1;
+}
+
+.captcha-code {
+  width: 100px;
+  height: 40px;
+  background: #f5f7fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
 }
 </style>
