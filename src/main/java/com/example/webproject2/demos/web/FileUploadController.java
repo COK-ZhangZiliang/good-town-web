@@ -22,12 +22,12 @@ public class FileUploadController {
     // 上传文件（包括图片和视频）
     @PostMapping("/upload")
     public Map<String, String> uploadFile(@RequestHeader(value = "token", required = false) String headerToken,
-                                          @RequestBody(required = false) Map<String, Object> requestData,
+                                          @RequestParam(value = "token", required = false) String paramToken,
                                           @RequestParam("file") MultipartFile file) {
         Map<String, String> result = new HashMap<>();
         try {
-            // 获取并验证 token：首先检查请求头中的 token，其次检查请求体中的 token
-            String token = headerToken != null ? headerToken : (requestData != null ? (String) requestData.get("token") : null);
+            // 获取并验证 token：首先检查请求头中的 token，其次检查请求参数中的 token
+            String token = headerToken != null ? headerToken : paramToken;
 
             if (token == null || token.isEmpty()) {
                 result.put("status", "error");
@@ -95,9 +95,6 @@ public class FileUploadController {
             return result;
         }
     }
-
-
-
 
 }
 
