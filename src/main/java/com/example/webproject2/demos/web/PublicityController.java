@@ -35,10 +35,12 @@ public class PublicityController {
     public ResponseEntity<?> getMyPublicity(@RequestHeader("token") String token) {
         try {
             // 解析 token 获取 userId
+            if (token == null || token.isEmpty())
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             Integer userId = TokenService.validateToken(token);
             System.out.println("Decoded userId: " + userId);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 获取用户的宣传信息
@@ -77,7 +79,7 @@ public class PublicityController {
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -88,14 +90,12 @@ public class PublicityController {
             // 获取并验证 token
             String token = headerToken != null ? headerToken : (String) requestData.get("token");
             if (token == null || token.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Token is required"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             }
 
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 获取请求参数
@@ -110,22 +110,19 @@ public class PublicityController {
 
             // 检查 province, city, townName 参数是否为空
             if (province == null || city == null || townName == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("status", "error", "message", "Province, city, and townName are required"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Province, city, and townName are required"));
             }
 
             // 根据 province, city, townName 查询或创建 TownId
             Integer townId = townService.findOrCreateTown(province, city, townName);
             if (townId == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("status", "error", "message", "Failed to find or create town"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Failed to find or create town"));
             }
 
             // 检查是否已存在对应的宣传信息
             boolean publicityExists = publicityService.existsByUserIdAndTownId(userId, townId);
             if (publicityExists) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("status", "error", "message", "Publicity already exists for this town and user."));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity already exists for this town and user."));
             }
 
             // 创建宣传信息
@@ -162,8 +159,7 @@ public class PublicityController {
 
             return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity added successfully!", "data", publicityData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -173,10 +169,13 @@ public class PublicityController {
     @GetMapping("/assistance/requests")
     public ResponseEntity<?> getPublicityAssistanceRequests(@RequestHeader("token") String token) {
         try {
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            }
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 查询用户发布的所有宣传信息
@@ -225,7 +224,7 @@ public class PublicityController {
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -236,24 +235,24 @@ public class PublicityController {
                                              @PathVariable Integer publicityId,
                                              @RequestBody Map<String, Object> requestData) {
         try {
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            }
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 获取要修改的宣传信息
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
             }
 
             // 确保用户只能修改自己发布的宣传信息
             if (!publicity.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "You do not have permission to edit this publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "You do not have permission to edit this publicity"));
             }
 
             Integer status = (Integer) requestData.get("status");
@@ -262,8 +261,7 @@ public class PublicityController {
             List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicityId);
             for (Assistance assistance : assistanceRequests) {
                 if (assistance.getStatus() == 0) { // 如果存在待接受的助力请求
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("status", "error", "message", "Cannot publish publicity with active assistance requests"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot publish publicity with active assistance requests"));
                 }
             }
 
@@ -306,8 +304,7 @@ public class PublicityController {
 
             return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity updated successfully!", "data", publicityData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -317,32 +314,31 @@ public class PublicityController {
     public ResponseEntity<?> deletePublicity(@RequestHeader("token") String token,
                                              @PathVariable Integer publicityId) {
         try {
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            }
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 查询宣传信息
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
             }
 
             // 验证该宣传信息是否属于当前用户
             if (!publicity.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "You do not have permission to delete this publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "You do not have permission to delete this publicity"));
             }
 
             // 检查该宣传信息是否有待处理的助力请求
             List<Assistance> assistanceList = assistanceService.getAssistanceByPublicityId(publicityId);
             for (Assistance assistance : assistanceList) {
                 if (assistance.getStatus() == 0 || assistance.getStatus() == 1 || assistance.getStatus() == 2) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("status", "error", "message", "Cannot delete publicity with active assistance requests"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot delete publicity with active assistance requests"));
                 }
             }
 
@@ -351,8 +347,7 @@ public class PublicityController {
 
             return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity deleted successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -381,8 +376,7 @@ public class PublicityController {
 
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -392,8 +386,7 @@ public class PublicityController {
         try {
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
             }
 
             Map<String, Object> publicityData = new HashMap<>();
@@ -409,8 +402,7 @@ public class PublicityController {
 
             return ResponseEntity.ok(Map.of("status", "success", "data", publicityData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 

@@ -21,14 +21,35 @@ public class FileUploadController {
 
     // 上传文件（包括图片和视频）
     @PostMapping("/upload")
-    public Map<String, String> uploadFile(@RequestParam("file") MultipartFile file) {
+    public Map<String, String> uploadFile(@RequestHeader(value = "token", required = false) String headerToken,
+                                          @RequestBody(required = false) Map<String, Object> requestData,
+                                          @RequestParam("file") MultipartFile file) {
         Map<String, String> result = new HashMap<>();
-        if (file.isEmpty()) {
-            result.put("status", "error");
-            result.put("message", "上传失败，文件为空");
-            return result;
-        }
         try {
+            // 获取并验证 token：首先检查请求头中的 token，其次检查请求体中的 token
+            String token = headerToken != null ? headerToken : (requestData != null ? (String) requestData.get("token") : null);
+
+            if (token == null || token.isEmpty()) {
+                result.put("status", "error");
+                result.put("message", "请登录");
+                return result;
+            }
+
+            // 验证 token 的有效性
+            Integer userId = TokenService.validateToken(token);
+            if (userId == null) {
+                result.put("status", "error");
+                result.put("message", "登录过期，请重新登录");
+                return result;
+            }
+
+            // 检查文件是否为空
+            if (file.isEmpty()) {
+                result.put("status", "error");
+                result.put("message", "上传失败，文件为空");
+                return result;
+            }
+
             // 确保上传目录存在
             File dir = new File(uploadDir);
             if (!dir.exists()) {
@@ -58,12 +79,25 @@ public class FileUploadController {
             result.put("file_name", fileName); // 文件名
             result.put("file_url", accessUrl + fileName); // 可访问的 URL
             return result;
+
         } catch (IOException e) {
-            e.printStackTrace();
+            // 捕获文件上传中的 IO 异常
+            e.printStackTrace(); // 打印异常堆栈，方便调试
+            result.put("status", "error");
+            result.put("message", "上传失败：文件操作异常");
+            return result;
+
+        } catch (Exception e) {
+            // 捕获所有其他异常
+            e.printStackTrace(); // 打印异常堆栈，方便调试
             result.put("status", "error");
             result.put("message", "上传失败：" + e.getMessage());
             return result;
         }
     }
+
+
+
+
 }
 
