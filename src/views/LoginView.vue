@@ -1,3 +1,4 @@
+<!-- 登录界面 -->
 <template>
   <div class="login-container">
     <!-- 
@@ -296,7 +297,7 @@ const login = async () => {
   }
   refreshCaptcha()
   try {
-    const response = await axios.post('http://localhost:8088/api/users/login', {
+    const response = await axios.post('http://10.29.39.146:8088/api/users/login', {
       username: formData.username,
       password: formData.password
     })
@@ -321,7 +322,7 @@ const login = async () => {
 // 注册方法
 const register = async () => {
   try {
-    const response = await axios.post('http://localhost:8088/api/users/register', {
+    const response = await axios.post('http://10.29.39.146:8088/api/users/register', {
       username: formData.username,
       name: formData.name,
       password: formData.registerPassword,
