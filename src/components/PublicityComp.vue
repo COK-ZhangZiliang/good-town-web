@@ -5,13 +5,13 @@
         <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px" class="promotion-form">
             <el-form-item label="省份" prop="province">
                 <el-select v-model="formData.province" @change="handleProvinceChange">
-                    <el-option v-for="item in provinces" :key="item.value" :label="item.label" :value="item.value" />
+                    <el-option v-for="item in provinces" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>
 
             <el-form-item label="城市" prop="city">
-                <el-select v-model="formData.city" @change="handleCityChange">
-                    <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value" />
+                <el-select v-model="formData.city">
+                    <el-option v-for="item in cities" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>
 
@@ -39,8 +39,8 @@
             </el-form-item>
 
             <el-form-item label="上传图片">
-                <el-upload action="/api/upload" list-type="picture-card" :on-preview="handlePictureCardPreview"
-                    :on-remove="handleRemove" :before-upload="beforeUpload" multiple>
+                <el-upload v-model:file-list="formData.images" list-type="picture-card" :on-preview="handleImagePreview"
+                    :before-upload="beforeImageUpload" accept="image/*" :auto-upload="false" multiple>
                     <el-icon>
                         <Plus />
                     </el-icon>
@@ -48,8 +48,8 @@
             </el-form-item>
 
             <el-form-item label="上传视频">
-                <el-upload action="/api/upload" :on-success="handleVideoSuccess" :before-upload="beforeVideoUpload"
-                    accept="video/*">
+                <el-upload v-model:file-list="formData.videos" :before-upload="beforeVideoUpload" accept="video/*"
+                    :auto-upload="false" multiple>
                     <el-button type="primary">选择视频</el-button>
                 </el-upload>
             </el-form-item>
@@ -62,6 +62,10 @@
             </div>
         </template>
     </el-dialog>
+
+    <el-dialog v-model="previewVisible">
+        <img w-full :src="dialogImageUrl" alt="Preview Image" />
+    </el-dialog>
 </template>
 
 <script setup>
@@ -70,8 +74,12 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils/auth'
 import axios from 'axios'
+import pcData from '@/utils/pc.json'
 
 const formRef = ref(null)
+
+const dialogImageUrl = ref('')
+const previewVisible = ref(false)
 
 const formData = reactive({
     province: '',
@@ -93,85 +101,93 @@ const rules = {
     description: [{ required: true, message: '请输入宣传描述', trigger: 'blur' }]
 }
 
+const provinces = Object.keys(pcData)
+const cities = ref([])
+
+const handleProvinceChange = (value) => {
+    cities.value = pcData[value] || []
+}
+
 const handleSubmit = async () => {
     if (!formRef.value) return
+    const token = getToken()
+    const imageUrls = []
+    const videoUrls = []
 
     try {
         await formRef.value.validate()
 
-        const imageUrls = []
-        const videoUrls = []
-
-        if (formData.images || formData.videos) {
-            // 循环上传图片和视频
-            for (let i = 0; i < formData.images.length; i++) {
-                const image = formData.images[i]
-                try {
-                    const response = await axios.post('http://10.29.39.146:8088/api/files/upload', {
-                        file: image
-                    })
-                    if (response.data.status === 'success') {
-                        console.log(response.data)
-                        imageUrls.push(response.data.file_url)
-                    }
-                    else {
-                        ElMessage.error(response.data.message)
-                        console.error(response.data)
-                    }
+        for (let i = 0; i < formData.images.length; i++) {
+            const file = formData.images[i]
+            const data = new FormData()
+            data.append('file', file.raw)
+            data.append('token', token)
+            try {
+                const response = await axios.post('http://10.29.39.146:8088/api/files/upload', data)
+                if (response.data.status === 'success') {
+                    imageUrls.push(response.data.file_url)
+                    console.log(response.data)
                 }
-                catch (error) {
-                    ElMessage.error('上传图片失败，请稍后再试')
-                    console.error(error)
+                else {
+                    ElMessage.error(response.data.message)
+                    console.error(response.data)
+                    return
                 }
-
-            }
-            for (let i = 0; i < formData.videos.length; i++) {
-                const video = formData.videos[i]
-                try {
-                    const response = await axios.post('http://10.29.39.146:8088/api/files/upload', {
-                        file: video
-                    })
-                    if (response.data.status === 'success') {
-                        console.log(response.data)
-                        videoUrls.push(response.data.file_url)
-                    }
-                    else {
-                        ElMessage.error(response.data.message)
-                        console.error(response.data)
-                    }
-                } catch (error) {
-                    ElMessage.error('上传视频失败，请稍后再试')
-                    console.error(error)
-                }
+            } catch (error) {
+                ElMessage.error('图片上传失败，请稍后再试')
+                console.error(error)
+                return
             }
         }
 
-        try {
-            const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
-                token: getToken(),
-                province: formData.province,
-                city: formData.city,
-                townName: formData.town,
-                type: formData.type,
-                title: formData.title,
-                description: formData.description,
-                image_url: imageUrls.join(','),
-                video_url: videoUrls.join(',')
-            })
-            if (response.data.status === 'success') {
-                ElMessage.success('发布成功')
-                console.log(response.data)
-                dialogVisible.value = false
+        for (let i = 0; i < formData.videos.length; i++) {
+            const file = formData.videos[i]
+            const data = new FormData()
+            data.append('file', file.raw)
+            data.append('token', token)
+            try {
+                const response = await axios.post('http://10.29.39.146:8088/api/files/upload', data)
+                if (response.data.status === 'success') {
+                    videoUrls.push(response.data.file_url)
+                    console.log(response.data)
+                }
+                else {
+                    ElMessage.error(response.data.message)
+                    console.error(response.data)
+                    return
+                }
+            } catch (error) {
+                ElMessage.error('视频上传失败，请稍后再试')
+                console.error(error)
+                return
             }
-            else {
-                ElMessage.error(response.data.message)
-                console.error(response.data)
-            }
-        } catch (error) {
-            ElMessage.error('发布失败，请稍后再试')
-            console.error(error)
-        }
 
+            try {
+                const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
+                    token: token,
+                    province: formData.province,
+                    city: formData.city,
+                    townName: formData.town,
+                    type: formData.type,
+                    title: formData.title,
+                    description: formData.description,
+                    image_url: imageUrls.join(','),
+                    video_url: videoUrls.join(',')
+                })
+                if (response.data.status === 'success') {
+                    ElMessage.success('发布成功')
+                    console.log(response.data)
+                    dialogVisible.value = false
+                }
+                else {
+                    ElMessage.error(response.data.message)
+                    console.error(response.data)
+                }
+            } catch (error) {
+                ElMessage.error('发布失败，请稍后再试')
+                console.error(error)
+            }
+        }
 
     } catch (error) {
         ElMessage.error('请求失败，请稍后再试')
@@ -179,29 +195,23 @@ const handleSubmit = async () => {
     }
 }
 
-const beforeUpload = (file) => {
-    const isImage = file.type.startsWith('image/')
-    const isLt2M = file.size / 1024 / 1024 < 2
-
-    if (!isImage) {
-        ElMessage.error('只能上传图片文件!')
-        return false
+const beforeImageUpload = (file) => {
+    const isLt5M = file.size / 1024 / 1024 < 5
+    if (!isLt5M) {
+        ElMessage.error('上传图片大小不能超过 5MB!')
     }
-    if (!isLt2M) {
-        ElMessage.error('图片大小不能超过 2MB!')
-        return false
-    }
-    return true
 }
 
 const beforeVideoUpload = (file) => {
-    const isLt50M = file.size / 1024 / 1024 < 50
-
-    if (!isLt50M) {
-        ElMessage.error('视频大小不能超过 50MB!')
-        return false
+    const isLt100M = file.size / 1024 / 1024 < 100
+    if (!isLt100M) {
+        ElMessage.error('上传视频大小不能超过 100MB!')
     }
-    return true
+}
+
+const handleImagePreview = (uploadFile) => {
+    dialogImageUrl.value = uploadFile.url
+    previewVisible.value = true
 }
 
 const props = defineProps({
@@ -219,5 +229,4 @@ const dialogVisible = computed({
         emit('update:visible', value)
     }
 })
-
 </script>
