@@ -15,6 +15,8 @@ import java.util.*;
 @Getter
 @Setter
 public class PublicityController {
+    @Autowired
+    private TownService townService;
 
     @Autowired
     private PublicityService publicityService;
@@ -79,11 +81,11 @@ public class PublicityController {
         }
     }
 
-    // 创建宣传信息
     @PostMapping("/create")
     public ResponseEntity<?> addPublicity(@RequestHeader(value = "token", required = false) String headerToken,
                                           @RequestBody Map<String, Object> requestData) {
         try {
+            // 获取并验证 token
             String token = headerToken != null ? headerToken : (String) requestData.get("token");
             if (token == null || token.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -96,19 +98,37 @@ public class PublicityController {
                         .body(Map.of("status", "error", "message", "Invalid token"));
             }
 
-            Integer townId = (Integer) requestData.get("town_id");
+            // 获取请求参数
+            String province = (String) requestData.get("province");
+            String city = (String) requestData.get("city");
+            String townName = (String) requestData.get("townName");
             String type = (String) requestData.get("type");
             String title = (String) requestData.get("title");
             String description = (String) requestData.get("description");
             String imageUrl = (String) requestData.get("image_url");
             String videoUrl = (String) requestData.get("video_url");
 
+            // 检查 province, city, townName 参数是否为空
+            if (province == null || city == null || townName == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("status", "error", "message", "Province, city, and townName are required"));
+            }
+
+            // 根据 province, city, townName 查询或创建 TownId
+            Integer townId = townService.findOrCreateTown(province, city, townName);
+            if (townId == null) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("status", "error", "message", "Failed to find or create town"));
+            }
+
+            // 检查是否已存在对应的宣传信息
             boolean publicityExists = publicityService.existsByUserIdAndTownId(userId, townId);
             if (publicityExists) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("status", "error", "message", "Publicity already exists for this town and user."));
             }
 
+            // 创建宣传信息
             Publicity publicity = new Publicity();
             publicity.setUserId(userId);
             publicity.setTownId(townId);
@@ -117,7 +137,7 @@ public class PublicityController {
             publicity.setDescription(description);
             publicity.setImageUrl(imageUrl);
             publicity.setVideoUrl(videoUrl);
-            publicity.setStatus(-1); // 默认状态为未发布，如果需要发布则调用发布接口
+            publicity.setStatus(-1); // 默认状态为未发布
 
             // 设置时间字段
             LocalDateTime now = LocalDateTime.now();
@@ -126,6 +146,7 @@ public class PublicityController {
 
             publicity = publicityService.addPublicity(publicity);
 
+            // 构建返回数据
             Map<String, Object> publicityData = new HashMap<>();
             publicityData.put("publicity_id", publicity.getPublicityId());
             publicityData.put("user_id", publicity.getUserId());
