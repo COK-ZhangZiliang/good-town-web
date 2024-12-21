@@ -232,7 +232,7 @@ const getUserInfo = async () => {
       console.error(response.data)
     }
   } catch (error) {
-    ElMessage.error('登录已过期，请重新登录')
+    ElMessage.error('获取用户信息失败，请稍后再试')
     token = ''
     isLoggedIn.value = false
     console.error(error)
