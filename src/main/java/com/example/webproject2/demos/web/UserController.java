@@ -49,7 +49,7 @@ public class UserController {
             UserResponse errorResponse = new UserResponse("error", "验证失败", errorMessages);
 
             // 返回包含验证错误的响应体
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.ok(errorResponse);
         }
 
         // 检查用户名是否已存在
@@ -168,17 +168,17 @@ public class UserController {
 
         // 如果 token 仍然为空，返回错误
         if (token == null || token.isEmpty()) {
-            System.out.println("认证失败或请求参数错误");
-            UserResponse errorResponse = new UserResponse("error", "认证失败或请求参数错误", (UserResponse.UserData) null);
-            return ResponseEntity.status(400).body(errorResponse);
+            System.out.println("token为空");
+            UserResponse errorResponse = new UserResponse("error", "请登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
         }
 
         // 验证 token
         Integer userId = TokenService.validateToken(token);
         if (userId == null) {
             System.out.println("认证失败，token无效");
-            UserResponse errorResponse = new UserResponse("error", "认证失败，token无效", (UserResponse.UserData) null);
-            return ResponseEntity.status(401).body(errorResponse);
+            UserResponse errorResponse = new UserResponse("error", "登录过期，请重新登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
         }
 
         // 获取用户信息

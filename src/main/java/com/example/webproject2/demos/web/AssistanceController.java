@@ -3,7 +3,6 @@ package com.example.webproject2.demos.web;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,15 +36,13 @@ public class AssistanceController {
             // 获取 token：优先从 Header 获取，若没有则从 Body 获取
             String token = headerToken != null ? headerToken : (String) requestPayload.get("token");
             if (token == null || token.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Token is missing"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             }
 
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 获取请求参数
@@ -53,15 +50,13 @@ public class AssistanceController {
             Integer action = (Integer) requestPayload.get("action"); // 1: 接受, 2: 拒绝
 
             if (assistanceId == null || action == null || !(action == 1 || action == 2)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("status", "error", "message", "Invalid parameters"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Invalid parameters"));
             }
 
             // 查询助力请求
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Assistance not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found"));
             }
 
             // 如果是接受操作，检查是否已存在成功记录，避免重复同意
@@ -69,16 +64,14 @@ public class AssistanceController {
                 boolean alreadyAccepted = assistanceSuccessService
                         .existsByAssistanceIdAndAssistanceUserId(assistanceId, assistance.getUserId());
                 if (alreadyAccepted) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body(Map.of("status", "error", "message", "Assistance request already accepted"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already accepted"));
                 }
             }
 
             // 验证是否是该用户发布的宣传信息
             Publicity publicity = publicityService.getPublicityById(assistance.getPublicityId());
             if (publicity == null || !publicity.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "Unauthorized action"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Unauthorized action"));
             }
 
             // 更新助力状态
@@ -99,8 +92,7 @@ public class AssistanceController {
             return ResponseEntity.ok(Map.of("status", "success", "message", "Assistance request updated successfully"));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -109,11 +101,13 @@ public class AssistanceController {
     @GetMapping("/my")
     public ResponseEntity<?> getMyAssistances(@RequestHeader("token") String token) {
         try {
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            }
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 查询用户自己的助力信息
@@ -135,8 +129,7 @@ public class AssistanceController {
 
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -149,15 +142,13 @@ public class AssistanceController {
             // 获取 token：优先从 Header 获取，若没有则从 Body 获取
             String token = headerToken != null ? headerToken : (String) requestPayload.get("token");
             if (token == null || token.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Token is missing"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             }
 
             // 验证 token 并获取 userId
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 获取请求参数
@@ -168,28 +159,24 @@ public class AssistanceController {
 
             // 校验必填参数
             if (publicityId == null || description == null || description.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("status", "error", "message", "Missing required parameters"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Missing required parameters"));
             }
 
             // 检查宣传信息是否存在
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
             }
 
             // 检查是否尝试助力自己的宣传信息
             if (publicity.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "Cannot assist your own publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot assist your own publicity"));
             }
 
             // 检查是否已经存在相同的助力请求
             boolean assistanceExists = assistanceService.existsByPublicityIdAndUserId(publicityId, userId);
             if (assistanceExists) {
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(Map.of("status", "error", "message", "Assistance request already exists"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already exists"));
             }
 
             // 构建助力对象
@@ -225,8 +212,7 @@ public class AssistanceController {
             ));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -240,14 +226,12 @@ public class AssistanceController {
             // 获取 token 并验证用户身份
             String token = headerToken != null ? headerToken : (String) requestPayload.get("token");
             if (token == null || token.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Token is missing"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             }
 
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 参数获取
@@ -258,21 +242,18 @@ public class AssistanceController {
             Integer status = (Integer) requestPayload.getOrDefault("status", null);
 
             if (assistanceId == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("status", "error", "message", "Missing assistance_id"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Missing assistance_id"));
             }
 
             // 查找助力信息
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null || !assistance.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
             }
 
             // 检查助力状态，只有未被同意的（状态为 0 或 2 或 3）才能修改
             if (assistance.getStatus() != 0 && assistance.getStatus() != 3 && assistance.getStatus() != 2) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "Cannot modify accepted assistance"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot modify accepted assistance"));
             }
 
             // 更新字段
@@ -304,8 +285,7 @@ public class AssistanceController {
             ));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
@@ -319,27 +299,23 @@ public class AssistanceController {
             // 获取 token 并验证用户身份
             String token = headerToken;
             if (token == null || token.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Token is missing"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
             }
 
             Integer userId = TokenService.validateToken(token);
             if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("status", "error", "message", "Invalid token"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
             }
 
             // 查找助力信息
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null || !assistance.getUserId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
             }
 
             // 检查助力状态，只有未被接受的（状态为 0 或 2 或 3 ）才能删除
             if (assistance.getStatus() != 0 && assistance.getStatus() != 2 && assistance.getStatus() != 3) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("status", "error", "message", "Cannot delete accepted assistance"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot delete accepted assistance"));
             }
 
             // 删除助力记录
@@ -348,8 +324,7 @@ public class AssistanceController {
             return ResponseEntity.ok(Map.of("status", "success", "message", "Assistance deleted successfully"));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("status", "error", "message", e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 
