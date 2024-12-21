@@ -1,3 +1,4 @@
+<!-- 发布宣传对话框 -->
 <template>
     <el-dialog v-model="dialogVisible" title="发布宣传信息" width="600px" :close-on-click-modal="false"
         custom-class="promotion-dialog">
@@ -67,6 +68,8 @@
 import { ref, reactive, defineProps, defineEmits, computed } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { getToken } from '@/utils/auth'
+import axios from 'axios'
 
 const formRef = ref(null)
 
@@ -78,7 +81,7 @@ const formData = reactive({
     title: '',
     description: '',
     images: [],
-    video: ''
+    videos: []
 })
 
 const rules = {
@@ -95,11 +98,84 @@ const handleSubmit = async () => {
 
     try {
         await formRef.value.validate()
-        // TODO: 调用API提交数据
-        ElMessage.success('发布成功')
-        dialogVisible.value = false
+
+        const imageUrls = []
+        const videoUrls = []
+
+        if (formData.images || formData.videos) {
+            // 循环上传图片和视频
+            for (let i = 0; i < formData.images.length; i++) {
+                const image = formData.images[i]
+                try {
+                    const response = await axios.post('http://10.29.39.146:8088/api/files/upload', {
+                        file: image
+                    })
+                    if (response.data.status === 'success') {
+                        console.log(response.data)
+                        imageUrls.push(response.data.file_url)
+                    }
+                    else {
+                        ElMessage.error(response.data.message)
+                        console.error(response.data)
+                    }
+                }
+                catch (error) {
+                    ElMessage.error('上传图片失败，请稍后再试')
+                    console.error(error)
+                }
+
+            }
+            for (let i = 0; i < formData.videos.length; i++) {
+                const video = formData.videos[i]
+                try {
+                    const response = await axios.post('http://10.29.39.146:8088/api/files/upload', {
+                        file: video
+                    })
+                    if (response.data.status === 'success') {
+                        console.log(response.data)
+                        videoUrls.push(response.data.file_url)
+                    }
+                    else {
+                        ElMessage.error(response.data.message)
+                        console.error(response.data)
+                    }
+                } catch (error) {
+                    ElMessage.error('上传视频失败，请稍后再试')
+                    console.error(error)
+                }
+            }
+        }
+
+        try {
+            const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
+                token: getToken(),
+                province: formData.province,
+                city: formData.city,
+                townName: formData.town,
+                type: formData.type,
+                title: formData.title,
+                description: formData.description,
+                image_url: imageUrls.join(','),
+                video_url: videoUrls.join(',')
+            })
+            if (response.data.status === 'success') {
+                ElMessage.success('发布成功')
+                console.log(response.data)
+                dialogVisible.value = false
+            }
+            else {
+                ElMessage.error(response.data.message)
+                console.error(response.data)
+            }
+        } catch (error) {
+            ElMessage.error('发布失败，请稍后再试')
+            console.error(error)
+        }
+
+
     } catch (error) {
-        console.error('表单验证失败:', error)
+        ElMessage.error('请求失败，请稍后再试')
+        console.error(error)
     }
 }
 
@@ -143,4 +219,5 @@ const dialogVisible = computed({
         emit('update:visible', value)
     }
 })
+
 </script>
