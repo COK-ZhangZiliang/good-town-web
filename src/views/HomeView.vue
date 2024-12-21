@@ -1,3 +1,4 @@
+<!-- 主页面 -->
 <template>
   <div class="home-container">
     <!-- 顶部菜单栏 -->
@@ -78,7 +79,7 @@
             </template>
           </el-input>
         </div>
-        <router-view></router-view>
+        <MultipageComp />
       </div>
 
       <!-- 右侧热度榜 -->
@@ -102,7 +103,7 @@
     </div>
   </div>
 
-  <!--修改个人信息-->>
+  <!--修改个人信息-->
   <el-dialog v-model="updateVisible" title="修改个人信息" width="480px" :close-on-click-modal="false"
     custom-class="profile-dialog">
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="90px" class="profile-form">
@@ -136,7 +137,7 @@
     </template>
   </el-dialog>
 
-  <!-- 发布宣传 -->>
+  <!-- 发布宣传 -->
   <PublicityComp v-model:visible="promoteVisible" />
 </template>
 
@@ -149,6 +150,7 @@ import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
 import PublicityComp from '@/components/PublicityComp.vue'
+import MultipageComp from '@/components/MultipageComp.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
@@ -206,7 +208,7 @@ const rules = {
 // 获取用户信息
 const getUserInfo = async () => {
   try {
-    const response = await axios.put('http://localhost:8088/api/users/update', {
+    const response = await axios.put('http://10.29.39.146:8088/api/users/update', {
       token: token
     })
     if (response.data.status === 'success') {
@@ -230,7 +232,7 @@ const getUserInfo = async () => {
       console.error(response.data)
     }
   } catch (error) {
-    Element.error('登录已过期，请重新登录')
+    ElMessage.error('登录已过期，请重新登录')
     token = ''
     isLoggedIn.value = false
     console.error(error)
@@ -240,7 +242,7 @@ const getUserInfo = async () => {
 // 更新用户信息方法
 const updateInfo = async () => {
   try {
-    const response = await axios.put('http://localhost:8088/api/users/update', {
+    const response = await axios.put('http://10.29.39.146:8088/api/users/update', {
       token: token,
       phone: formData.phone,
       bio: formData.bio,
