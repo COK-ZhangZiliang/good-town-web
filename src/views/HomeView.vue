@@ -229,6 +229,7 @@ const getUserInfo = async () => {
       formData.phone = response.data.data.phone
       formData.bio = response.data.data.bio
     } else {
+      ElMessage.error(response.data.message)
       console.error(response.data)
     }
   } catch (error) {
