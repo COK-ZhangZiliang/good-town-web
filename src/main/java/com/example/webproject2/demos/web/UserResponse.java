@@ -34,6 +34,7 @@ public class UserResponse {
         this.data = new ErrorResponse(errorCode, statusCode);
     }
 
+
     // 内部类用于存储成功返回的用户数据
     @Getter
     @Setter
@@ -60,7 +61,17 @@ public class UserResponse {
             this.userType = userType;
             this.avatarUrl = avatarUrl;
         }
+
+        public UserData(Integer userId, String username, String phone, String bio, String avatarUrl) {
+            this.userId = userId;
+            this.username = username;
+            this.phone = phone;
+            this.bio = bio;
+            this.avatarUrl = avatarUrl;
+        }
     }
+
+
 
     // 内部类用于存储错误信息
     @Getter

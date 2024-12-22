@@ -1,6 +1,5 @@
 package com.example.webproject2.demos.web;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 
@@ -286,4 +285,34 @@ public class UserController {
         // 返回成功响应，带有用户信息
         return ResponseEntity.ok(new UserResponse("success", "用户信息获取成功", userData));
     }
+
+
+    // 通过用户 ID 获取公开的用户信息
+    @GetMapping("/info/{userId}")
+    public ResponseEntity<?> getUserById(@PathVariable Integer userId) {
+        // 获取用户信息
+        Optional<Users> userOptional = userRepository.findById(userId);
+
+        // 如果用户不存在，返回错误响应
+        if (userOptional.isEmpty()) {
+            UserResponse errorResponse = new UserResponse("error", "用户不存在", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        Users user = userOptional.get();
+
+        // 创建返回数据的 UserData 对象，包含公开的字段
+        UserResponse.UserData userData = new UserResponse.UserData(
+                user.getUserId(),
+                user.getUsername(),
+                user.getPhone(),
+                user.getBio(),
+                user.getAvatarUrl() // 返回头像 URL
+        );
+
+        // 返回成功响应，带有用户的公开信息
+        return ResponseEntity.ok(new UserResponse("success", "用户公开信息获取成功", userData));
+    }
+
+
 }
