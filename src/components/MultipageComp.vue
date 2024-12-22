@@ -1,48 +1,46 @@
 <!-- 分页展示容器 -->
 <template>
     <div class="multipage-container">
-        <div class="items-container">
-            <PublictiyItem v-for="item in currentPageItems" :key="item.id" 
-                :userAvatar="item.userAvatar" 
-                :username="item.username" 
-                :title="item.title" 
-                :description="item.description" 
-                :media="item.media" />
-        </div>
-        <div class="pagination">
-            <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
-                上一页
-            </button>
-            <span>{{ currentPage }} / {{ totalPages }}</span>
-            <button :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">
-                下一页
-            </button>
-        </div>
+            <div class="items-container">
+                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :title="item.title"
+                    :description="item.description" />
+            </div>
+            <div class="pagination-wrapper">
+                <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage"
+                    :background="background" layout="prev, pager, next, jumper" :total="items.length"
+                    @current-change="handleCurrentChange" />
+            </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, defineProps } from 'vue'
 import PublictiyItem from '@/components/PublictiyItem.vue'
 
-const items = ref([])
+// 接收数据
+const props = defineProps(
+    {
+        publicityData: {
+            type: Array,
+            required: true
+        }
+    }
+)
+const items = computed(() => props.publicityData)
+
 const currentPage = ref(1)
 const itemsPerPage = 5
 
-const totalPages = computed(() => {
-    return Math.ceil(items.value.length / itemsPerPage)
-})
-
+// 获取当前页面的items
 const currentPageItems = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage
     const end = start + itemsPerPage
-    return items.value.slice(start, end)
+    return (items.value || []).slice(start, end)
 })
 
-function changePage(page) {
-    if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page
-    }
+// 跳转页面
+const handleCurrentChange = (val) => {
+    currentPage.value = val
 }
 </script>
 

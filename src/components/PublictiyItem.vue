@@ -1,16 +1,13 @@
 <!-- 宣传卡片 -->
 <template>
     <div class="publicity-item">
-        <div class="header">
+        <!-- <div class="header">
             <img :src="userAvatar" alt="用户头像" class="avatar" />
             <span class="username">{{ username }}</span>
-        </div>
+        </div> -->
         <div class="content">
-            <h3 class="title">{{ title }}</h3>
-            <p class="description">{{ description }}</p>
-            <div class="media" v-if="media.length">
-                <img v-for="(item, index) in media" :key="index" :src="item" alt="媒体文件" class="media-item" />
-            </div>
+            <h3 class="title">{{ props.title }}</h3>
+            <p class="description">{{ props.description }}</p>
         </div>
         <div class="actions">
             <button @click="like">点赞</button>
@@ -21,6 +18,8 @@
 </template>
 
 <script setup>
+import { defineProps } from 'vue';
+
 
 const like = () => {
     // 点赞逻辑
@@ -33,6 +32,18 @@ const support = () => {
 const comment = () => {
     // 评论逻辑
 }
+
+const props = defineProps({
+    title: {
+        type: String,
+        required: true
+    },
+    description: {
+        type: String,
+        required: true
+    }
+})
+
 </script>
 
 <style lang="scss" scoped>
