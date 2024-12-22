@@ -94,7 +94,7 @@
             </template>
           </el-input>
         </div>
-        <MultipageComp />
+        <AssistanceComp v-if="activeMenu === 'createAssistance'" />
       </div>
 
       <!-- 右侧热度榜 -->
@@ -165,7 +165,7 @@ import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
 import PublicityComp from '@/components/PublicityComp.vue'
-import MultipageComp from '@/components/MultipageComp.vue'
+import AssistanceComp from '@/components/AssistanceComp.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
