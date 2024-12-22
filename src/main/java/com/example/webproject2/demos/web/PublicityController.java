@@ -135,7 +135,7 @@ public class PublicityController {
             publicity.setDescription(description);
             publicity.setImageUrl(imageUrl);
             publicity.setVideoUrl(videoUrl);
-            publicity.setStatus(-1); // 默认状态为未发布
+            publicity.setStatus(0); // 默认状态为未发布
 
             // 设置时间字段
             LocalDateTime now = LocalDateTime.now();
