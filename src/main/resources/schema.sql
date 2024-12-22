@@ -9,6 +9,7 @@ CREATE TABLE users (
     id_number VARCHAR(50),
     phone VARCHAR(11),
     bio TEXT,
+    avatar_url VARCHAR(2550) DEFAULT NULL,  -- 新增头像 URL 字段，默认为 NULL
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -29,8 +30,8 @@ CREATE TABLE publicity (
     type VARCHAR(50) NOT NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT,
-    image_url VARCHAR(255),
-    video_url VARCHAR(255),
+    image_url VARCHAR(2550),
+    video_url VARCHAR(2550),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status TINYINT NOT NULL DEFAULT 0 CHECK (status IN (0, -1)),
@@ -44,8 +45,8 @@ CREATE TABLE assistance (
     publicity_id INT NOT NULL,
     user_id INT NOT NULL,
     description TEXT,
-    image_url VARCHAR(255),
-    video_url VARCHAR(255),
+    image_url VARCHAR(2550),
+    video_url VARCHAR(2550),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status TINYINT NOT NULL CHECK (status IN (0, 1, 2, 3)),
