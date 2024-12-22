@@ -108,6 +108,7 @@ const handleProvinceChange = (value) => {
     cities.value = pcData[value] || []
 }
 
+// 处理提交
 const handleSubmit = async () => {
     if (!formRef.value) return
     const token = getToken()
@@ -161,32 +162,32 @@ const handleSubmit = async () => {
                 console.error(error)
                 return
             }
+        }
 
-            try {
-                const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
-                    token: token,
-                    province: formData.province,
-                    city: formData.city,
-                    townName: formData.town,
-                    type: formData.type,
-                    title: formData.title,
-                    description: formData.description,
-                    image_url: imageUrls.join(','),
-                    video_url: videoUrls.join(',')
-                })
-                if (response.data.status === 'success') {
-                    ElMessage.success('发布成功')
-                    console.log(response.data)
-                    dialogVisible.value = false
-                }
-                else {
-                    ElMessage.error(response.data.message)
-                    console.error(response.data)
-                }
-            } catch (error) {
-                ElMessage.error('发布失败，请稍后再试')
-                console.error(error)
+        try {
+            const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
+                token: token,
+                province: formData.province,
+                city: formData.city,
+                townName: formData.town,
+                type: formData.type,
+                title: formData.title,
+                description: formData.description,
+                image_url: imageUrls.join(','),
+                video_url: videoUrls.join(',')
+            })
+            if (response.data.status === 'success') {
+                ElMessage.success('发布成功')
+                console.log(response.data)
+                dialogVisible.value = false
             }
+            else {
+                ElMessage.error(response.data.message)
+                console.error(response.data)
+            }
+        } catch (error) {
+            ElMessage.error('发布失败，请稍后再试')
+            console.error(error)
         }
 
     } catch (error) {
@@ -195,6 +196,7 @@ const handleSubmit = async () => {
     }
 }
 
+// 检测上传图片大小
 const beforeImageUpload = (file) => {
     const isLt5M = file.size / 1024 / 1024 < 5
     if (!isLt5M) {
@@ -202,6 +204,7 @@ const beforeImageUpload = (file) => {
     }
 }
 
+// 检测上传视频大小
 const beforeVideoUpload = (file) => {
     const isLt100M = file.size / 1024 / 1024 < 100
     if (!isLt100M) {
@@ -209,11 +212,13 @@ const beforeVideoUpload = (file) => {
     }
 }
 
+// 图片预览
 const handleImagePreview = (uploadFile) => {
     dialogImageUrl.value = uploadFile.url
     previewVisible.value = true
 }
 
+// 接收变量
 const props = defineProps({
     visible: {
         type: Boolean,
