@@ -25,10 +25,10 @@ public class Assistance {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_url", length = 255)
+    @Column(name = "image_url", length = 2550)
     private String imageUrl;
 
-    @Column(name = "video_url", length = 255)
+    @Column(name = "video_url", length = 2550)
     private String videoUrl;
 
     @Column(name = "created_at", nullable = false, updatable = false)

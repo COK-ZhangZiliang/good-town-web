@@ -31,10 +31,10 @@ public class Publicity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_url", length = 255, nullable = true)
+    @Column(name = "image_url", length = 2550, nullable = true)
     private String imageUrl;
 
-    @Column(name = "video_url", length = 255, nullable = true)
+    @Column(name = "video_url", length = 2550, nullable = true)
     private String videoUrl;
 
     @Column(name = "created_at", nullable = false, updatable = false)
