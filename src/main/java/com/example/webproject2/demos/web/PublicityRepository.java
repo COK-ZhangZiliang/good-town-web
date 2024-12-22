@@ -14,7 +14,9 @@ public interface PublicityRepository extends JpaRepository<Publicity, Integer> {
 
     boolean existsByUserIdAndTownId(Integer userId, Integer townId);
 
-    List<Publicity> findByStatus(Integer status);
+    // 按照 updated_at 降序排序（从新到旧）
+    List<Publicity> findByStatusOrderByUpdatedAtDesc(Integer status);
+
 }
 
 

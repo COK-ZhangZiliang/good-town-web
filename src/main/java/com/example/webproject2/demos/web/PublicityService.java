@@ -42,7 +42,8 @@ public class PublicityService {
 
     public List<Publicity> getPublicityByStatus(Integer status) {
         // 根据状态查询宣传信息(status = 0: 已发布, status = -1: 取消发布)
-        return publicityRepository.findByStatus(status);
+        // 根据状态查询宣传信息并按 updated_at 降序排序
+        return publicityRepository.findByStatusOrderByUpdatedAtDesc(status);
     }
 
 }
