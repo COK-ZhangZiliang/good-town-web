@@ -13,6 +13,7 @@ import java.util.*;
 @RequestMapping("/api/publicity")
 @Getter
 @Setter
+@CrossOrigin
 public class PublicityController {
     @Autowired
     private TownService townService;

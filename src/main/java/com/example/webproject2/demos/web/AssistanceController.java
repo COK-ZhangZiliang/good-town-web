@@ -16,6 +16,7 @@ import java.util.Map;
 @RequestMapping("/api/assistance")
 @Getter
 @Setter
+@CrossOrigin
 public class AssistanceController {
     @Autowired
     private PublicityService publicityService;
