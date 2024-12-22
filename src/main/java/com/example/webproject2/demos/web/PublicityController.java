@@ -359,6 +359,7 @@ public class PublicityController {
             // 查询所有状态为已发布（status = 0）的宣传信息
             List<Publicity> publicityList = publicityService.getPublicityByStatus(0);
 
+            // 宣传信息构造响应数据
             List<Map<String, Object>> responseData = new ArrayList<>();
             for (Publicity publicity : publicityList) {
                 Map<String, Object> publicityData = new HashMap<>();
@@ -372,6 +373,24 @@ public class PublicityController {
                 publicityData.put("created_at", publicity.getCreatedAt());
                 publicityData.put("updated_at", publicity.getUpdatedAt());
                 responseData.add(publicityData);
+
+                // 获取宣传者的详细信息
+                Integer userId = publicity.getUserId();  // 假设 Publicity 有 userId 字段
+                if (userId != null) {
+                    Optional<Users> userOptional = userRepository.findById(userId);
+                    if (userOptional.isPresent()) {
+                        Users user = userOptional.get();
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("userId", user.getUserId());
+                        userData.put("username", user.getUsername());
+                        userData.put("phone", user.getPhone());
+                        userData.put("bio", user.getBio());
+                        userData.put("avatarUrl", user.getAvatarUrl());
+
+                        // 将用户信息添加到宣传信息中
+                        publicityData.put("user", userData);
+                    }
+                }
             }
 
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
