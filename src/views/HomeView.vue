@@ -223,9 +223,7 @@ const rules = {
 // 获取用户信息
 const getUserInfo = async () => {
   try {
-    const response = await axios.put('http://10.29.39.146:8088/api/users/update', {
-      token: token
-    })
+    const response = await axios.get('http://10.29.39.146:8088/api/users/info', {headers: { token: token }})
     if (response.data.status === 'success') {
       formData.username = response.data.data.username
       formData.name = response.data.data.name
