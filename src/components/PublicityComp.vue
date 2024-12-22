@@ -74,7 +74,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils/auth'
 import axios from 'axios'
-import pcData from '@/utils/pc.json'
+import pcData from '@/assets/pc.json'
 
 const formRef = ref(null)
 
