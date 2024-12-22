@@ -12,5 +12,7 @@ public class UserUpdateRequest {
     private String phone;
     private String bio;
     private String password;
+    private String avatarUrl;
+    private Byte userType;
 
 }

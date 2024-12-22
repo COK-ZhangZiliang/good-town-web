@@ -19,10 +19,6 @@ import java.util.*;
 @RequestMapping("/api/users")
 @CrossOrigin
 public class UserController {
-
-    @Autowired
-    private EntityManager entityManager;
-
     @Autowired
     private UserRepository userRepository;
 
@@ -73,6 +69,12 @@ public class UserController {
         newUser.setPhone(userRequest.getPhone());
         newUser.setBio(userRequest.getBio());
 
+        // 处理 user_type 字段（默认为 0）
+        newUser.setUserType(userRequest.getUserType() != null ? userRequest.getUserType() : 0); // 默认 0 普通用户
+
+        // 处理头像 URL
+        newUser.setAvatarUrl(userRequest.getAvatarUrl()); // 如果没有传值，默认为 null
+
         // 保存用户信息
         Users savedUser = userRepository.save(newUser);
 
@@ -87,7 +89,9 @@ public class UserController {
                         savedUser.getIdType(),
                         savedUser.getIdNumber(),
                         savedUser.getPhone(),
-                        savedUser.getBio()
+                        savedUser.getBio(),
+                        savedUser.getAvatarUrl(),  // 返回头像 URL
+                        savedUser.getUserType()     // 返回用户类型
                 )
         );
 
@@ -95,7 +99,7 @@ public class UserController {
         return ResponseEntity.ok(successResponse);
     }
 
-
+    // 用户登录接口
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserRequest userRequest) {
         // 检查用户名是否存在
@@ -137,7 +141,9 @@ public class UserController {
                 user.getIdType(),
                 user.getIdNumber(),
                 user.getPhone(),
-                user.getBio()
+                user.getBio(),
+                user.getAvatarUrl(),  // 返回头像 URL
+                user.getUserType()     // 返回用户类型
         );
 
         // 设置 successResponse 的 data
@@ -150,7 +156,6 @@ public class UserController {
 
         return ResponseEntity.ok(successResponse);
     }
-
 
     // 修改个人信息接口
     @PutMapping("/update")
@@ -191,37 +196,36 @@ public class UserController {
 
         Users user = userOptional.get();
 
-        // 更新用户信息的逻辑（与之前一致）
+        // 更新用户信息的逻辑
         if (updateRequest.getIdType() != null) {
-            System.out.println("ID Type: " + updateRequest.getIdType());
             user.setIdType(updateRequest.getIdType());
         }
         if (updateRequest.getIdNumber() != null) {
-            System.out.println("ID Number: " + updateRequest.getIdNumber());
             user.setIdNumber(updateRequest.getIdNumber());
         }
         if (updateRequest.getPhone() != null) {
-            System.out.println("Phone: " + updateRequest.getPhone());
             user.setPhone(updateRequest.getPhone());
         }
         if (updateRequest.getBio() != null) {
-            System.out.println("Bio: " + updateRequest.getBio());
             user.setBio(updateRequest.getBio());
         }
         if (updateRequest.getPassword() != null && updateRequest.getPassword().length() >= 6 && updateRequest.getPassword().matches(".*\\d.*")) {
-            System.out.println("Password: " + updateRequest.getPassword());
             user.setPassword(updateRequest.getPassword());
-        } else if (updateRequest.getPassword() != null) {
-            System.out.println("密码至少6位并包含至少2个数字");
-            UserResponse errorResponse = new UserResponse("error", "密码至少6位并包含至少2个数字", (UserResponse.UserData) null);
-            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 更新头像 URL
+        if (updateRequest.getAvatarUrl() != null) {
+            user.setAvatarUrl(updateRequest.getAvatarUrl());
+        }
+
+        // 更新用户类型 (如果需要修改)
+        if (updateRequest.getUserType() != null) {
+            user.setUserType(updateRequest.getUserType());
         }
 
         // 保存更新后的用户信息
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
-        entityManager.flush(); // 强制将更改刷新到数据库
-        entityManager.refresh(user); // 刷新实体以获取最新的数据
 
         System.out.println("用户信息更新成功");
 
@@ -233,10 +237,53 @@ public class UserController {
                 user.getIdType(),
                 user.getIdNumber(),
                 user.getPhone(),
-                user.getBio()
+                user.getBio(),
+                user.getAvatarUrl(),  // 返回头像 URL
+                user.getUserType()     // 返回用户类型
         );
 
         // 返回成功响应，带有更新后的用户信息
         return ResponseEntity.ok(new UserResponse("success", "用户信息更新成功", userData));
+    }
+
+    // 通过 token 获取用户信息接口
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(@RequestHeader(value = "token") String token) {
+        if (token == null || token.isEmpty()) {
+            UserResponse errorResponse = new UserResponse("error", "请登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 验证 token
+        Integer userId = TokenService.validateToken(token);
+        if (userId == null) {
+            UserResponse errorResponse = new UserResponse("error", "登录过期，请重新登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 获取用户信息
+        Optional<Users> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            UserResponse errorResponse = new UserResponse("error", "用户不存在", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        Users user = userOptional.get();
+
+        // 创建返回数据的 UserData 对象
+        UserResponse.UserData userData = new UserResponse.UserData(
+                user.getUserId(),
+                user.getUsername(),
+                user.getName(),
+                user.getIdType(),
+                user.getIdNumber(),
+                user.getPhone(),
+                user.getBio(),
+                user.getAvatarUrl(),  // 返回头像 URL
+                user.getUserType()     // 返回用户类型
+        );
+
+        // 返回成功响应，带有用户信息
+        return ResponseEntity.ok(new UserResponse("success", "用户信息获取成功", userData));
     }
 }

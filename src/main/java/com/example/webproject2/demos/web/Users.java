@@ -42,6 +42,12 @@ public class Users {
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(nullable = false, columnDefinition = "TINYINT DEFAULT 0")
+    private Byte userType = 0;  // 默认是 0，表示普通用户
+
+    @Column(length = 255, columnDefinition = "VARCHAR(255) DEFAULT NULL")
+    private String avatarUrl;  // 头像 URL，默认为 null
+
     @PreUpdate
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();

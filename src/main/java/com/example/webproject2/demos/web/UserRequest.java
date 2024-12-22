@@ -28,4 +28,8 @@ public class UserRequest {
     private String phone;
 
     private String bio;
+
+    private Byte userType = 0;
+
+    private String avatarUrl;
 }

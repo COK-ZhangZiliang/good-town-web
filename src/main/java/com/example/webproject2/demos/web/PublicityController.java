@@ -3,7 +3,6 @@ package com.example.webproject2.demos.web;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -134,7 +133,7 @@ public class PublicityController {
             publicity.setDescription(description);
             publicity.setImageUrl(imageUrl);
             publicity.setVideoUrl(videoUrl);
-            publicity.setStatus(-1); // 默认状态为未发布
+            publicity.setStatus(0); // 默认状态为未发布
 
             // 设置时间字段
             LocalDateTime now = LocalDateTime.now();

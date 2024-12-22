@@ -46,8 +46,10 @@ public class UserResponse {
         private String phone;
         private String bio;
         private String token; // 仅在登录成功时使用
+        private Byte userType;
+        private String avatarUrl;
 
-        public UserData(Integer userId, String username, String name, String idType, String idNumber, String phone, String bio) {
+        public UserData(Integer userId, String username, String name, String idType, String idNumber, String phone, String bio, String avatarUrl, Byte userType) {
             this.userId = userId;
             this.username = username;
             this.name = name;
@@ -55,6 +57,8 @@ public class UserResponse {
             this.idNumber = idNumber;
             this.phone = phone;
             this.bio = bio;
+            this.userType = userType;
+            this.avatarUrl = avatarUrl;
         }
     }
 
