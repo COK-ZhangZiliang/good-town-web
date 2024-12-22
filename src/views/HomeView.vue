@@ -39,13 +39,28 @@
     <div class="main-content">
       <!-- 左侧导航栏 -->
       <div class="left-sidebar">
-        <el-menu :default-active="activeMenu" class="nav-menu" @select="handleMenuSelect">
-          <el-menu-item index="help">
-            <el-icon>
-              <Star />
-            </el-icon>
-            <span>我助力</span>
-          </el-menu-item>
+        <el-menu :default-active="activeMenu" class="nav-menu" :default-openeds="['assist', 'promote']"
+          @select="handleMenuSelect">
+          <el-sub-menu index="assist">
+            <template #title>
+              <el-icon>
+                <Star />
+              </el-icon>
+              <span>我助力</span>
+            </template>
+            <el-menu-item index="myAssistance">
+              <el-icon>
+                <Document />
+              </el-icon>
+              <span>我的助力</span>
+            </el-menu-item>
+            <el-menu-item index="createAssistance">
+              <el-icon>
+                <Plus />
+              </el-icon>
+              <span>发布助力</span>
+            </el-menu-item>
+          </el-sub-menu>
           <el-sub-menu index="promote">
             <template #title>
               <el-icon>
@@ -156,7 +171,7 @@ import MultipageComp from '@/components/MultipageComp.vue'
 const isLoggedIn = ref(false)
 const userAvatar = ref('')
 const searchQuery = ref('')
-const activeMenu = ref('help')
+const activeMenu = ref('createAssistance')
 const router = useRouter()
 const updateVisible = ref(false)
 var token = ''
