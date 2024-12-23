@@ -25,6 +25,9 @@ public class PublicityController {
     private AssistanceService assistanceService;
 
     @Autowired
+    private TownRepository townRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -67,11 +70,55 @@ public class PublicityController {
                     publicityData.put("type", publicity.getType());
                     publicityData.put("title", publicity.getTitle());
                     publicityData.put("description", publicity.getDescription());
-                    publicityData.put("image_url", publicity.getImageUrl());
-                    publicityData.put("video_url", publicity.getVideoUrl());
+
+                    // 解析 image_url 和 video_url 为数组或列表
+                    String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+                    if (imageUrls != null && !imageUrls.isEmpty()) {
+                        String[] imageUrlArray = imageUrls.split(";");
+                        publicityData.put("image_url", imageUrlArray); // 转为数组形式
+                    } else {
+                        publicityData.put("image_url", new String[0]); // 空数组
+                    }
+
+                    String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+                    if (videoUrls != null && !videoUrls.isEmpty()) {
+                        String[] videoUrlArray = videoUrls.split(";");
+                        publicityData.put("video_url", videoUrlArray); // 转为数组形式
+                    } else {
+                        publicityData.put("video_url", new String[0]); // 空数组
+                    }
+
                     publicityData.put("created_at", publicity.getCreatedAt());
                     publicityData.put("updated_at", publicity.getUpdatedAt());
                     publicityData.put("status", publicity.getStatus());
+
+                    // 获取 townId 并查询 Towns 表
+                    Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+                    if (townId != null) {
+                        Optional<Towns> townOptional = townRepository.findById(townId);
+                        if (townOptional.isPresent()) {
+                            Towns town = townOptional.get();
+                            publicityData.put("town_name", town.getTownName());
+                            publicityData.put("city", town.getCity());
+                            publicityData.put("province", town.getProvince());
+                        }
+                    }
+
+                    // 获取宣传者的详细信息
+                    Optional<Users> userOptional = userRepository.findById(userId);
+                    if (userOptional.isPresent()) {
+                        Users user = userOptional.get();
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("userId", user.getUserId());
+                        userData.put("username", user.getUsername());
+                        userData.put("phone", user.getPhone());
+                        userData.put("bio", user.getBio());
+                        userData.put("avatarUrl", user.getAvatarUrl());
+
+                        // 将用户信息添加到宣传信息中
+                        publicityData.put("user", userData);
+                    }
+
                     responseData.add(publicityData);
                 }
             }
@@ -105,8 +152,8 @@ public class PublicityController {
             String type = (String) requestData.get("type");
             String title = (String) requestData.get("title");
             String description = (String) requestData.get("description");
-            String imageUrl = (String) requestData.get("image_url");
-            String videoUrl = (String) requestData.get("video_url");
+            List<String> imageUrlList = (List<String>) requestData.get("image_url"); // 前端传递的 image_url 数组
+            List<String> videoUrlList = (List<String>) requestData.get("video_url"); // 前端传递的 video_url 数组
 
             // 检查 province, city, townName 参数是否为空
             if (province == null || city == null || townName == null) {
@@ -132,9 +179,23 @@ public class PublicityController {
             publicity.setType(type);
             publicity.setTitle(title);
             publicity.setDescription(description);
-            publicity.setImageUrl(imageUrl);
-            publicity.setVideoUrl(videoUrl);
-            publicity.setStatus(0); // 默认状态为未发布
+
+            // 将 imageUrlList 和 videoUrlList 转为以 `;` 分隔的字符串
+            if (imageUrlList != null && !imageUrlList.isEmpty()) {
+                String imageUrl = String.join(";", imageUrlList); // 使用 ; 连接
+                publicity.setImageUrl(imageUrl);
+            } else {
+                publicity.setImageUrl(null); // 如果为空，保存为 null
+            }
+
+            if (videoUrlList != null && !videoUrlList.isEmpty()) {
+                String videoUrl = String.join(";", videoUrlList); // 使用 ; 连接
+                publicity.setVideoUrl(videoUrl);
+            } else {
+                publicity.setVideoUrl(null); // 如果为空，保存为 null
+            }
+
+            publicity.setStatus(0); // 默认状态为已发布
 
             // 设置时间字段
             LocalDateTime now = LocalDateTime.now();
@@ -162,6 +223,7 @@ public class PublicityController {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+
 
 
 
@@ -194,6 +256,53 @@ public class PublicityController {
                 publicityData.put("title", publicity.getTitle());
                 publicityData.put("type", publicity.getType());
                 publicityData.put("description", publicity.getDescription());
+
+                // 解析 image_url 和 video_url 为数组或列表
+                String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+                if (imageUrls != null && !imageUrls.isEmpty()) {
+                    String[] imageUrlArray = imageUrls.split(";");
+                    publicityData.put("image_url", imageUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("image_url", new String[0]); // 空数组
+                }
+
+                String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+                if (videoUrls != null && !videoUrls.isEmpty()) {
+                    String[] videoUrlArray = videoUrls.split(";");
+                    publicityData.put("video_url", videoUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("video_url", new String[0]); // 空数组
+                }
+
+                publicityData.put("created_at", publicity.getCreatedAt());
+                publicityData.put("updated_at", publicity.getUpdatedAt());
+
+                // 获取 townId 并查询 Towns 表
+                Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+                if (townId != null) {
+                    Optional<Towns> townOptional = townRepository.findById(townId);
+                    if (townOptional.isPresent()) {
+                        Towns town = townOptional.get();
+                        publicityData.put("town_name", town.getTownName());
+                        publicityData.put("city", town.getCity());
+                        publicityData.put("province", town.getProvince());
+                    }
+                }
+
+                // 获取宣传者的详细信息
+                Optional<Users> userOptional = userRepository.findById(userId);
+                if (userOptional.isPresent()) {
+                    Users user = userOptional.get();
+                    Map<String, Object> userData = new HashMap<>();
+                    userData.put("userId", user.getUserId());
+                    userData.put("username", user.getUsername());
+                    userData.put("phone", user.getPhone());
+                    userData.put("bio", user.getBio());
+                    userData.put("avatarUrl", user.getAvatarUrl());
+
+                    // 将用户信息添加到宣传信息中
+                    publicityData.put("user", userData);
+                }
 
                 // 查询该宣传信息下的助力请求
                 List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicity.getPublicityId());
@@ -229,6 +338,7 @@ public class PublicityController {
     }
 
 
+    // 修改宣传信息
     // 修改宣传信息
     @PutMapping("/update/{publicityId}")
     public ResponseEntity<?> updatePublicity(@RequestHeader("token") String token,
@@ -273,10 +383,24 @@ public class PublicityController {
                 publicity.setDescription((String) requestData.get("description"));
             }
             if (requestData.get("image_url") != null) {
-                publicity.setImageUrl((String) requestData.get("image_url"));
+                Object imageUrlObject = requestData.get("image_url");
+                if (imageUrlObject instanceof List) { // 检查是否为数组
+                    List<String> imageUrlList = (List<String>) imageUrlObject;
+                    String imageUrl = String.join(";", imageUrlList); // 将数组转换为以 `;` 分隔的字符串
+                    publicity.setImageUrl(imageUrl);
+                } else if (imageUrlObject instanceof String) { // 单个字符串
+                    publicity.setImageUrl((String) imageUrlObject);
+                }
             }
             if (requestData.get("video_url") != null) {
-                publicity.setVideoUrl((String) requestData.get("video_url"));
+                Object videoUrlObject = requestData.get("video_url");
+                if (videoUrlObject instanceof List) { // 检查是否为数组
+                    List<String> videoUrlList = (List<String>) videoUrlObject;
+                    String videoUrl = String.join(";", videoUrlList); // 将数组转换为以 `;` 分隔的字符串
+                    publicity.setVideoUrl(videoUrl);
+                } else if (videoUrlObject instanceof String) { // 单个字符串
+                    publicity.setVideoUrl((String) videoUrlObject);
+                }
             }
             if (status != null) {
                 publicity.setStatus(status);
@@ -307,6 +431,7 @@ public class PublicityController {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+
 
 
     // 删除宣传信息
@@ -352,7 +477,6 @@ public class PublicityController {
     }
 
 
-    // 查询系统中所有已发布的宣传信息
     @GetMapping("/all")
     public ResponseEntity<?> getAllPublicity() {
         try {
@@ -368,14 +492,41 @@ public class PublicityController {
                 publicityData.put("title", publicity.getTitle());
                 publicityData.put("type", publicity.getType());
                 publicityData.put("description", publicity.getDescription());
-                publicityData.put("image_url", publicity.getImageUrl());
-                publicityData.put("video_url", publicity.getVideoUrl());
+
+                // 解析 image_url 和 video_url 为数组或列表
+                String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+                if (imageUrls != null && !imageUrls.isEmpty()) {
+                    String[] imageUrlArray = imageUrls.split(";");
+                    publicityData.put("image_url", imageUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("image_url", new String[0]); // 空数组
+                }
+
+                String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+                if (videoUrls != null && !videoUrls.isEmpty()) {
+                    String[] videoUrlArray = videoUrls.split(";");
+                    publicityData.put("video_url", videoUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("video_url", new String[0]); // 空数组
+                }
+
                 publicityData.put("created_at", publicity.getCreatedAt());
                 publicityData.put("updated_at", publicity.getUpdatedAt());
-                responseData.add(publicityData);
+
+                // 获取 townId 并查询 Towns 表
+                Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+                if (townId != null) {
+                    Optional<Towns> townOptional = townRepository.findById(townId);
+                    if (townOptional.isPresent()) {
+                        Towns town = townOptional.get();
+                        publicityData.put("town_name", town.getTownName());
+                        publicityData.put("city", town.getCity());
+                        publicityData.put("province", town.getProvince());
+                    }
+                }
 
                 // 获取宣传者的详细信息
-                Integer userId = publicity.getUserId();  // 假设 Publicity 有 userId 字段
+                Integer userId = publicity.getUserId(); // 假设 Publicity 有 userId 字段
                 if (userId != null) {
                     Optional<Users> userOptional = userRepository.findById(userId);
                     if (userOptional.isPresent()) {
@@ -391,6 +542,33 @@ public class PublicityController {
                         publicityData.put("user", userData);
                     }
                 }
+
+                // 查询该宣传信息下的助力请求
+                List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicity.getPublicityId());
+
+                // 构造助力请求数据
+                List<Map<String, Object>> assistanceDataList = new ArrayList<>();
+                for (Assistance assistance : assistanceRequests) {
+                    Map<String, Object> assistanceData = new HashMap<>();
+                    assistanceData.put("assistance_id", assistance.getAssistanceId());
+                    assistanceData.put("user_id", assistance.getUserId());
+                    assistanceData.put("description", assistance.getDescription());
+                    assistanceData.put("image_url", assistance.getImageUrl());
+                    assistanceData.put("video_url", assistance.getVideoUrl());
+                    assistanceData.put("status", assistance.getStatus());
+
+                    // 查询请求用户的信息
+                    userRepository.findById(assistance.getUserId()).ifPresent(user -> {
+                        assistanceData.put("user_name", user.getName());
+                    });
+
+                    assistanceDataList.add(assistanceData);
+                }
+
+                publicityData.put("assistance_requests", assistanceDataList);
+
+
+                responseData.add(publicityData);
             }
 
             return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
@@ -398,6 +576,9 @@ public class PublicityController {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+
+
+
 
     // 查询宣传的详细信息
     @GetMapping("/{publicityId}")
@@ -414,10 +595,39 @@ public class PublicityController {
             publicityData.put("title", publicity.getTitle());
             publicityData.put("type", publicity.getType());
             publicityData.put("description", publicity.getDescription());
-            publicityData.put("image_url", publicity.getImageUrl());
-            publicityData.put("video_url", publicity.getVideoUrl());
+
+            // 解析 image_url 和 video_url 为数组或列表
+            String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+                String[] imageUrlArray = imageUrls.split(";");
+                publicityData.put("image_url", imageUrlArray); // 转为数组形式
+            } else {
+                publicityData.put("image_url", new String[0]); // 空数组
+            }
+
+            String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+            if (videoUrls != null && !videoUrls.isEmpty()) {
+                String[] videoUrlArray = videoUrls.split(";");
+                publicityData.put("video_url", videoUrlArray); // 转为数组形式
+            } else {
+                publicityData.put("video_url", new String[0]); // 空数组
+            }
+
             publicityData.put("created_at", publicity.getCreatedAt());
             publicityData.put("updated_at", publicity.getUpdatedAt());
+
+
+            // 获取 townId 并查询 Towns 表
+            Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+            if (townId != null) {
+                Optional<Towns> townOptional = townRepository.findById(townId);
+                if (townOptional.isPresent()) {
+                    Towns town = townOptional.get();
+                    publicityData.put("town_name", town.getTownName());
+                    publicityData.put("city", town.getCity());
+                    publicityData.put("province", town.getProvince());
+                }
+            }
 
             return ResponseEntity.ok(Map.of("status", "success", "data", publicityData));
         } catch (Exception e) {
