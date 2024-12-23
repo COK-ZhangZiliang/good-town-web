@@ -2,8 +2,7 @@
 <template>
     <div class="multipage-container">
             <div class="items-container">
-                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :title="item.title"
-                    :description="item.description" />
+                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" />
             </div>
             <div class="pagination-wrapper">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage"
