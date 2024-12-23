@@ -119,6 +119,48 @@ public class PublicityController {
                         publicityData.put("user", userData);
                     }
 
+                    // 查询该宣传信息下的助力请求
+                    List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicity.getPublicityId());
+
+                    // 构造助力请求数据
+                    List<Map<String, Object>> assistanceDataList = new ArrayList<>();
+                    for (Assistance assistance : assistanceRequests) {
+                        Map<String, Object> assistanceData = new HashMap<>();
+                        assistanceData.put("assistance_id", assistance.getAssistanceId());
+                        assistanceData.put("user_id", assistance.getUserId());
+                        assistanceData.put("description", assistance.getDescription());
+
+                        // 处理 image_url 字段，分割为数组形式
+                        String rawImageUrls = assistance.getImageUrl();
+                        if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                            List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                            assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                        }
+
+                        // 处理 video_url 字段，分割为数组形式
+                        String rawVideoUrls = assistance.getVideoUrl();
+                        if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                            List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                            assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                        }
+
+                        assistanceData.put("status", assistance.getStatus());
+
+                        // 查询请求用户的信息
+                        userRepository.findById(assistance.getUserId()).ifPresent(user -> {
+                            assistanceData.put("user_name", user.getName());
+                        });
+
+                        assistanceDataList.add(assistanceData);
+                    }
+
+                    publicityData.put("assistance_requests", assistanceDataList);
+
+
                     responseData.add(publicityData);
                 }
             }
@@ -314,8 +356,25 @@ public class PublicityController {
                     assistanceData.put("assistance_id", assistance.getAssistanceId());
                     assistanceData.put("user_id", assistance.getUserId());
                     assistanceData.put("description", assistance.getDescription());
-                    assistanceData.put("image_url", assistance.getImageUrl());
-                    assistanceData.put("video_url", assistance.getVideoUrl());
+
+                    // 处理 image_url 字段，分割为数组形式
+                    String rawImageUrls = assistance.getImageUrl();
+                    if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                        List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                        assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                    } else {
+                        assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                    }
+
+                    // 处理 video_url 字段，分割为数组形式
+                    String rawVideoUrls = assistance.getVideoUrl();
+                    if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                        List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                        assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                    } else {
+                        assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                    }
+
                     assistanceData.put("status", assistance.getStatus());
 
                     // 查询请求用户的信息
@@ -338,7 +397,6 @@ public class PublicityController {
     }
 
 
-    // 修改宣传信息
     // 修改宣传信息
     @PutMapping("/update/{publicityId}")
     public ResponseEntity<?> updatePublicity(@RequestHeader("token") String token,
@@ -556,8 +614,25 @@ public class PublicityController {
                         assistanceData.put("assistance_id", assistance.getAssistanceId());
                         assistanceData.put("user_id", assistance.getUserId());
                         assistanceData.put("description", assistance.getDescription());
-                        assistanceData.put("image_url", assistance.getImageUrl());
-                        assistanceData.put("video_url", assistance.getVideoUrl());
+
+                        // 处理 image_url 字段，分割为数组形式
+                        String rawImageUrls = assistance.getImageUrl();
+                        if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                            List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                            assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                        }
+
+                        // 处理 video_url 字段，分割为数组形式
+                        String rawVideoUrls = assistance.getVideoUrl();
+                        if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                            List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                            assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                        }
+
                         assistanceData.put("status", assistance.getStatus());
 
                         // 查询请求用户的信息

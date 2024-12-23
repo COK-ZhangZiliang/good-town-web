@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/assistance")
@@ -120,8 +117,25 @@ public class AssistanceController {
                 assistanceData.put("assistance_id", assistance.getAssistanceId());
                 assistanceData.put("publicity_id", assistance.getPublicityId());
                 assistanceData.put("description", assistance.getDescription());
-                assistanceData.put("image_url", assistance.getImageUrl());
-                assistanceData.put("video_url", assistance.getVideoUrl());
+
+                // 处理 image_url 字段，分割为数组形式
+                String rawImageUrls = assistance.getImageUrl();
+                if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                    List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                    assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                } else {
+                    assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                }
+
+                // 处理 video_url 字段，分割为数组形式
+                String rawVideoUrls = assistance.getVideoUrl();
+                if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                    List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                    assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                } else {
+                    assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                }
+
                 assistanceData.put("status", assistance.getStatus());
                 assistanceData.put("created_at", assistance.getCreatedAt());
                 assistanceData.put("updated_at", assistance.getUpdatedAt());
@@ -155,8 +169,8 @@ public class AssistanceController {
             // 获取请求参数
             Integer publicityId = (Integer) requestPayload.get("publicity_id");
             String description = (String) requestPayload.get("description");
-            String imageUrl = (String) requestPayload.getOrDefault("image_url", null);
-            String videoUrl = (String) requestPayload.getOrDefault("video_url", null);
+            List<String> imageUrlList = (List<String>) requestPayload.get("image_url"); // 前端传递的 image_url 数组
+            List<String> videoUrlList = (List<String>) requestPayload.get("video_url"); // 前端传递的 video_url 数组
 
             // 校验必填参数
             if (publicityId == null || description == null || description.trim().isEmpty()) {
@@ -185,8 +199,22 @@ public class AssistanceController {
             newAssistance.setPublicityId(publicityId);
             newAssistance.setUserId(userId);
             newAssistance.setDescription(description);
-            newAssistance.setImageUrl(imageUrl);
-            newAssistance.setVideoUrl(videoUrl);
+
+            // 将 imageUrlList 和 videoUrlList 转为以 `;` 分隔的字符串
+            if (imageUrlList != null && !imageUrlList.isEmpty()) {
+                String imageUrl = String.join(";", imageUrlList); // 使用 ; 连接
+                newAssistance.setImageUrl(imageUrl);
+            } else {
+                newAssistance.setImageUrl(null); // 如果为空，保存为 null
+            }
+
+            if (videoUrlList != null && !videoUrlList.isEmpty()) {
+                String videoUrl = String.join(";", videoUrlList); // 使用 ; 连接
+                newAssistance.setVideoUrl(videoUrl);
+            } else {
+                newAssistance.setVideoUrl(null); // 如果为空，保存为 null
+            }
+
             newAssistance.setStatus(3); // 初始状态为 3: 取消（还未发布出去）
             newAssistance.setCreatedAt(LocalDateTime.now());
             newAssistance.setUpdatedAt(LocalDateTime.now());
@@ -238,8 +266,8 @@ public class AssistanceController {
             // 参数获取
             Integer assistanceId = (Integer) requestPayload.get("assistance_id");
             String description = (String) requestPayload.get("description");
-            String imageUrl = (String) requestPayload.get("image_url");
-            String videoUrl = (String) requestPayload.get("video_url");
+            List<String> imageUrlList = (List<String>) requestPayload.get("image_url"); // 前端传递的 image_url 数组
+            List<String> videoUrlList = (List<String>) requestPayload.get("video_url"); // 前端传递的 video_url 数组
             Integer status = (Integer) requestPayload.getOrDefault("status", null);
 
             if (assistanceId == null) {
@@ -259,8 +287,22 @@ public class AssistanceController {
 
             // 更新字段
             if (description != null) assistance.setDescription(description);
-            if (imageUrl != null) assistance.setImageUrl(imageUrl);
-            if (videoUrl != null) assistance.setVideoUrl(videoUrl);
+
+            // 将 imageUrlList 和 videoUrlList 转为以 `;` 分隔的字符串
+            if (imageUrlList != null && !imageUrlList.isEmpty()) {
+                String imageUrl = String.join(";", imageUrlList); // 使用 ; 连接
+                assistance.setImageUrl(imageUrl);
+            } else {
+                assistance.setImageUrl(null); // 如果为空，保存为 null
+            }
+
+            if (videoUrlList != null && !videoUrlList.isEmpty()) {
+                String videoUrl = String.join(";", videoUrlList); // 使用 ; 连接
+                assistance.setVideoUrl(videoUrl);
+            } else {
+                assistance.setVideoUrl(null); // 如果为空，保存为 null
+            }
+
             if (status != null) assistance.setStatus(status);
             assistance.setUpdatedAt(LocalDateTime.now());
 
