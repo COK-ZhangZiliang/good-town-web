@@ -173,8 +173,8 @@ const handleSubmit = async () => {
                 type: formData.type,
                 title: formData.title,
                 description: formData.description,
-                image_url: imageUrls.join(','),
-                video_url: videoUrls.join(',')
+                image_url: imageUrls,
+                video_url: videoUrls
             })
             if (response.data.status === 'success') {
                 ElMessage.success('发布成功')
