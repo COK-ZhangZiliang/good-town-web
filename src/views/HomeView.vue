@@ -18,7 +18,18 @@
         <div v-else class="user-info">
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="el-dropdown-link">
-              <el-avatar :size="50" :src="userAvatar" />
+              <template v-if="formData.userAvatar">
+                <el-avatar :size="50" class="avatar">
+                  <img :src="formData.userAvatar" />
+                </el-avatar>
+              </template>
+              <template v-else>
+                <el-avatar :size="50" class="avatar">
+                  <el-icon>
+                    <UserFilled />
+                  </el-icon>
+                </el-avatar>
+              </template>
               <span class="username">{{ formData.username }}</span>
             </span>
             <template #dropdown>
@@ -169,7 +180,6 @@ import AssistanceComp from '@/components/AssistanceComp.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
-const userAvatar = ref('')
 const searchQuery = ref('')
 const activeMenu = ref('createAssistance')
 const router = useRouter()
@@ -178,6 +188,7 @@ var token = ''
 const promoteVisible = ref(false)
 
 const formData = reactive({
+  userAvatar: '',       // 用户头像url
   username: '',        // 用户名
   name: '',            // 用户姓名
   idType: '',          // 证件类型
@@ -223,8 +234,9 @@ const rules = {
 // 获取用户信息
 const getUserInfo = async () => {
   try {
-    const response = await axios.get('http://10.29.39.146:8088/api/users/info', {headers: { token: token }})
+    const response = await axios.get('http://10.29.39.146:8088/api/users/info', { headers: { token: token } })
     if (response.data.status === 'success') {
+      formData.userAvatar = response.data.data.avatarUrl
       formData.username = response.data.data.username
       formData.name = response.data.data.name
       switch (response.data.data.idType) {
@@ -389,6 +401,14 @@ $hot-color: #ff6b6b;
       height: 70px; // 图片高度稍小于顶栏
       width: auto;
       object-fit: contain;
+    }
+  }
+  
+  .user-info {
+    .username {
+        font-weight: bold;
+        margin-left: 8px;
+        font-size: large;
     }
   }
 }
