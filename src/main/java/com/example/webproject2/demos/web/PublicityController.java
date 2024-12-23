@@ -549,20 +549,24 @@ public class PublicityController {
                 // 构造助力请求数据
                 List<Map<String, Object>> assistanceDataList = new ArrayList<>();
                 for (Assistance assistance : assistanceRequests) {
-                    Map<String, Object> assistanceData = new HashMap<>();
-                    assistanceData.put("assistance_id", assistance.getAssistanceId());
-                    assistanceData.put("user_id", assistance.getUserId());
-                    assistanceData.put("description", assistance.getDescription());
-                    assistanceData.put("image_url", assistance.getImageUrl());
-                    assistanceData.put("video_url", assistance.getVideoUrl());
-                    assistanceData.put("status", assistance.getStatus());
+                    if (assistance.getStatus() == 1) // 只返回已接受的助力请求
+                    {
 
-                    // 查询请求用户的信息
-                    userRepository.findById(assistance.getUserId()).ifPresent(user -> {
-                        assistanceData.put("user_name", user.getName());
-                    });
+                        Map<String, Object> assistanceData = new HashMap<>();
+                        assistanceData.put("assistance_id", assistance.getAssistanceId());
+                        assistanceData.put("user_id", assistance.getUserId());
+                        assistanceData.put("description", assistance.getDescription());
+                        assistanceData.put("image_url", assistance.getImageUrl());
+                        assistanceData.put("video_url", assistance.getVideoUrl());
+                        assistanceData.put("status", assistance.getStatus());
 
-                    assistanceDataList.add(assistanceData);
+                        // 查询请求用户的信息
+                        userRepository.findById(assistance.getUserId()).ifPresent(user -> {
+                            assistanceData.put("user_name", user.getName());
+                        });
+
+                        assistanceDataList.add(assistanceData);
+                    }
                 }
 
                 publicityData.put("assistance_requests", assistanceDataList);
