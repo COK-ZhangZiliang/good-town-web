@@ -1,48 +1,123 @@
 <!-- 宣传卡片 -->
 <template>
     <div class="publicity-item">
-        <!-- <div class="header">
-            <img :src="userAvatar" alt="用户头像" class="avatar" />
-            <span class="username">{{ username }}</span>
-        </div> -->
-        <div class="content">
-            <h3 class="title">{{ props.title }}</h3>
-            <p class="description">{{ props.description }}</p>
+        <!-- 头部：用户头像、用户名 -->
+        <div class="header">
+            <template v-if="user.avatarUrl">
+                <el-avatar :size="40" class="avatar">
+                    <img :src="user.avatarUrl" />
+                </el-avatar>
+            </template>
+            <template v-else>
+                <el-avatar :size="40" class="avatar">
+                    <el-icon>
+                        <UserFilled />
+                    </el-icon>
+                </el-avatar>
+            </template>
+            <span class="username">{{ user.username }}</span>
         </div>
-        <div class="actions">
-            <button @click="like">点赞</button>
-            <button @click="support">助力</button>
-            <button @click="comment">评论</button>
+
+        <!-- 主要内容 -->
+        <div class="content">
+            <h3 class="title">{{ content.title }}</h3>
+            <p class="description">{{ content.description }}</p>
+        </div>
+
+        <!-- 图片展示 -->
+        <div class="media-container" v-if="imageUrls.length">
+            <el-image v-for="(url, index) in imageUrls" :key="index" :src="url" :preview-src-list="imageUrls"
+                fit="cover" class="media-item" />
+        </div>
+
+        <!-- 视频展示 -->
+        <div class="media-container" v-if="videoUrls.length">
+            <video v-for="(url, index) in videoUrls" :key="index" :src="url" controls class="media-item" />
+        </div>
+
+        <div class="footer">
+            <!-- 省市标签，乡镇标签，类型标签 -->
+            <div class="tags">
+                <el-tag type="success" size="large" effect="dark">{{ content.province }}</el-tag>
+                <el-tag type="warning" size="large" effect="dark">{{ content.city }}</el-tag>
+                <el-tag type="primary" size="large" effect="dark">{{ content.town }}</el-tag>
+                <el-tag type="info" size="large" effect="dark">{{ convertedType }}</el-tag>
+            </div>
+
+            <!-- 助力、修改、删除按钮 -->
+            <div class="button-container">
+                <el-button v-if="props.showType === 'showAll'" type="primary" @click="handleSupport">
+                    <el-icon>
+                        <Star />
+                    </el-icon>
+                    助力
+                </el-button>
+
+                <template v-if="props.type === 'showMy'">
+                    <el-button type="warning" @click="handleEdit">
+                        <el-icon>
+                            <Edit />
+                        </el-icon>
+                        修改
+                    </el-button>
+                    <el-button type="danger" @click="handleDelete">
+                        <el-icon>
+                            <Delete />
+                        </el-icon>
+                        删除
+                    </el-button>
+                </template>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
-
-
-const like = () => {
-    // 点赞逻辑
-}
-
-const support = () => {
-    // 助力逻辑
-}
-
-const comment = () => {
-    // 评论逻辑
-}
+import { computed, defineProps } from 'vue'
+import { Star, Edit, Delete, UserFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
-    title: {
-        type: String,
-        required: true
+    content: {
+        type: Object,
+        required: true,
+        default: () => ({}),
     },
-    description: {
+    showType: {
         type: String,
-        required: true
+        required: true,
+        default: 'showAll',
     }
 })
+
+const content = computed(() => {
+    return props.content
+})
+const imageUrls = computed(() => content.value.image_url || [])
+const videoUrls = computed(() => content.value.video_url || [])
+const user = computed(() => content.value.user || {})
+
+// 类型映射
+const typeMap = {
+    'farmhouse': '农家院',
+    'nature': '自然风光',
+    'ancient': '古建筑',
+    'specialty': '土特产',
+    'food': '特色小吃',
+    'folk': '民俗活动'
+}
+
+const convertedType = computed(() => {
+    return typeMap[props.content.type] || props.content.type
+})
+
+const handleSupport = () => {
+}
+
+const handleEdit = () => {
+}
+
+const handleDelete = () => {
+}
 
 </script>
 
@@ -96,21 +171,34 @@ const props = defineProps({
     }
 }
 
-.actions {
-    display: flex;
+.media-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 8px;
+    margin: 10px 0;
 
-    button {
-        padding: 8px 12px;
-        border: none;
+    .media-item {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
         border-radius: 4px;
-        cursor: pointer;
-        background-color: #007bff;
-        color: white;
+    }
+}
 
-        &:hover {
-            background-color: #0056b3;
-        }
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+
+    .tags {
+        display: flex;
+        gap: 8px;
+    }
+
+    .button-container {
+        display: flex;
+        gap: 8px;
     }
 }
 </style>
