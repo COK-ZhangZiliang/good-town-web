@@ -16,6 +16,7 @@
                 </el-avatar>
             </template>
             <span class="username">{{ user.username }}</span>
+            <span class="update-time">{{ content.updated_at }}</span>
         </div>
 
         <!-- 主要内容 -->
@@ -25,13 +26,9 @@
         </div>
 
         <!-- 图片展示 -->
-        <div class="media-container" v-if="imageUrls.length">
+        <div class="media-container">
             <el-image v-for="(url, index) in imageUrls" :key="index" :src="url" :preview-src-list="imageUrls"
                 fit="cover" class="media-item" />
-        </div>
-
-        <!-- 视频展示 -->
-        <div class="media-container" v-if="videoUrls.length">
             <video v-for="(url, index) in videoUrls" :key="index" :src="url" controls class="media-item" />
         </div>
 
@@ -40,7 +37,7 @@
             <div class="tags">
                 <el-tag type="success" size="large" effect="dark">{{ content.province }}</el-tag>
                 <el-tag type="warning" size="large" effect="dark">{{ content.city }}</el-tag>
-                <el-tag type="primary" size="large" effect="dark">{{ content.town }}</el-tag>
+                <el-tag type="primary" size="large" effect="dark">{{ content.town_name }}</el-tag>
                 <el-tag type="info" size="large" effect="dark">{{ convertedType }}</el-tag>
             </div>
 
@@ -68,13 +65,23 @@
                     </el-button>
                 </template>
             </div>
+
+            <div class="support-users" v-if="assist.length">
+                <span class="support-label">已接受助力:</span>
+                <span v-for="(ass, index) in assist" :key="index" class="support-name" @click="showAssistDetail(ass)">
+                    {{ ass.user_name }}{{ index < assist.length - 1 ? ',' : '' }} </span>
+            </div>
         </div>
     </div>
+
+    <!-- 助力信息详情对话框 -->
+    <AssistanceInfo v-model:dialog-visible="AssistanceInfoVisible" :assistance="selectedAssistance" />
 </template>
 
 <script setup>
-import { computed, defineProps } from 'vue'
+import { computed, defineProps, ref } from 'vue'
 import { Star, Edit, Delete, UserFilled } from '@element-plus/icons-vue'
+import AssistanceInfo from '@/components/AssistanceInfo.vue';
 
 const props = defineProps({
     content: {
@@ -95,6 +102,15 @@ const content = computed(() => {
 const imageUrls = computed(() => content.value.image_url || [])
 const videoUrls = computed(() => content.value.video_url || [])
 const user = computed(() => content.value.user || {})
+const assist = computed(() => content.value.assistance_requests || {})
+
+const AssistanceInfoVisible = ref(false)
+const selectedAssistance = ref(null)
+
+const showAssistDetail = (ass) => {
+    AssistanceInfoVisible.value = true
+    selectedAssistance.value = ass
+}
 
 // 类型映射
 const typeMap = {
@@ -130,6 +146,7 @@ const handleDelete = () => {
 }
 
 .header {
+    position: relative;
     display: flex;
     align-items: center;
     margin-bottom: 12px;
@@ -143,6 +160,13 @@ const handleDelete = () => {
 
     .username {
         font-weight: bold;
+    }
+
+    .update-time {
+        position: absolute;
+        right: 0;
+        color: #999;
+        font-size: 14px;
     }
 }
 
@@ -172,14 +196,16 @@ const handleDelete = () => {
 }
 
 .media-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
     margin: 10px 0;
+    flex-wrap: wrap;
 
     .media-item {
-        width: 100%;
-        height: 150px;
+        width: 300px;
+        height: 225px;
         object-fit: cover;
         border-radius: 4px;
     }
@@ -189,7 +215,7 @@ const handleDelete = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 30px;
 
     .tags {
         display: flex;
@@ -199,6 +225,20 @@ const handleDelete = () => {
     .button-container {
         display: flex;
         gap: 8px;
+    }
+}
+
+.support-users {
+    margin-top: 8px;
+
+    .support-name {
+        color: #409EFF;
+        cursor: pointer;
+        margin: 0 4px;
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 }
 </style>

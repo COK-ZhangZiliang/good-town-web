@@ -256,6 +256,7 @@ const getUserInfo = async () => {
     } else {
       ElMessage.error(response.data.message)
       console.error(response.data)
+      isLoggedIn.value = false
     }
   } catch (error) {
     ElMessage.error('获取用户信息失败，请稍后再试')
@@ -430,7 +431,7 @@ $hot-color: #ff6b6b;
 }
 
 .left-sidebar {
-  width: 200px;
+  width: 225px;
   background-color: white;
   border-right: 1px solid $border-color;
   padding: 10px;
@@ -452,7 +453,7 @@ $hot-color: #ff6b6b;
 
 .content {
   flex: 1;
-  padding: 20px;
+  padding: 80px;
   background-color: #f5f7fa;
   overflow-y: auto;
 
@@ -464,7 +465,7 @@ $hot-color: #ff6b6b;
 }
 
 .right-sidebar {
-  width: 300px;
+  width: 350px;
   background-color: white;
   border-left: 1px solid $border-color;
   padding: 20px;
