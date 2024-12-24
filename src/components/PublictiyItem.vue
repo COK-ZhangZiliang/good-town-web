@@ -43,14 +43,14 @@
 
             <!-- 助力、修改、删除按钮 -->
             <div class="button-container">
-                <el-button v-if="props.showType === 'showAll'" type="primary" @click="handleSupport">
+                <el-button v-if="props.type === 'allPromotions'" type="primary" @click="handleSupport">
                     <el-icon>
                         <Star />
                     </el-icon>
                     助力
                 </el-button>
 
-                <template v-if="props.type === 'showMy'">
+                <template v-if="props.type === 'myPromotions'">
                     <el-button type="warning" @click="handleEdit">
                         <el-icon>
                             <Edit />
@@ -76,23 +76,68 @@
 
     <!-- 助力信息详情对话框 -->
     <AssistanceInfo v-model:dialog-visible="AssistanceInfoVisible" :assistance="selectedAssistance" />
+
+    <!-- 填写助力信息对话框 -->
+    <el-dialog v-model="supportVisible" title="添加助力信息" width="600px" :close-on-click-modal="false">
+        <el-form :model="supportFormData" :rules="rules" ref="supportFormRef">
+            <el-form-item label="助力描述" prop="description">
+                <el-input v-model="supportFormData.description" type="textarea" :rows="4" placeholder="请输入助力描述" />
+            </el-form-item>
+
+            <el-form-item label="上传图片">
+                <el-upload v-model:file-list="supportFormData.images" list-type="picture-card"
+                    :on-preview="handleImagePreview" :before-upload="beforeImageUpload" accept="image/*"
+                    :auto-upload="false" multiple>
+                    <el-icon>
+                        <Plus />
+                    </el-icon>
+                </el-upload>
+            </el-form-item>
+
+            <el-form-item label="上传视频">
+                <el-upload v-model:file-list="supportFormData.videos" :before-upload="beforeVideoUpload"
+                    accept="video/*" :auto-upload="false" multiple>
+                    <el-button type="primary">选择视频</el-button>
+                </el-upload>
+            </el-form-item>
+        </el-form>
+        
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="cancelSupport">取消</el-button>
+                <el-button type="primary" @click="submitSupport">确定</el-button>
+            </span>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-model="previewVisible">
+        <img w-full :src="dialogImageUrl" alt="Preview Image" />
+    </el-dialog>
 </template>
 
 <script setup>
-import { computed, defineProps, ref } from 'vue'
-import { Star, Edit, Delete, UserFilled } from '@element-plus/icons-vue'
-import AssistanceInfo from '@/components/AssistanceInfo.vue';
+import { computed, defineProps, ref, reactive } from 'vue'
+import { Star, Edit, Delete, UserFilled, Plus } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import AssistanceInfo from '@/components/AssistanceInfo.vue'
+import { getToken } from '@/utils/auth'
+import { uploadFiles } from '@/utils/upload'
+import axios from 'axios'
 
+// 接收数据
 const props = defineProps({
     content: {
         type: Object,
         required: true,
         default: () => ({}),
     },
-    showType: {
+    type: {
         type: String,
         required: true,
-        default: 'showAll',
+    },
+    username: {
+        type: String,
+        required: true
     }
 })
 
@@ -107,6 +152,10 @@ const assist = computed(() => content.value.assistance_requests || {})
 const AssistanceInfoVisible = ref(false)
 const selectedAssistance = ref(null)
 
+const dialogImageUrl = ref('')
+const previewVisible = ref(false)
+
+// 展示详细助力信息
 const showAssistDetail = (ass) => {
     AssistanceInfoVisible.value = true
     selectedAssistance.value = ass
@@ -126,7 +175,100 @@ const convertedType = computed(() => {
     return typeMap[props.content.type] || props.content.type
 })
 
+const supportVisible = ref(false)
+const supportFormRef = ref()
+const supportFormData = reactive({
+    description: '',
+    images: [],
+    videos: []
+})
+
+const rules = {
+    description: [
+        { required: true, message: '请输入助力描述', trigger: 'blur' },
+        { min: 1, max: 500, message: '长度在 1 到 500 个字符', trigger: 'blur' }
+    ]
+}
+
 const handleSupport = () => {
+    if (user.value.username === props.username) {
+        ElMessage.error('无法对自己的宣传助力')
+        return
+    }
+    supportVisible.value = true
+}
+
+// 处理助力提交
+const submitSupport = async () => {
+    if (!supportFormRef.value) return
+    const token = getToken()
+
+    try {
+        await supportFormRef.value.validate()
+
+        const imageUrls = uploadFiles(supportFormData.images, token)
+        const videoUrls = uploadFiles(supportFormData.videos, token)
+
+        try {
+            console.log(1)
+            const response = await axios.post('http://10.29.39.146:8088/api/assistance/create', {
+                token: token,
+                publicity_id: content.value.publicity_id,
+                description: supportFormData.description,
+                image_url: imageUrls,
+                video_url: videoUrls
+            })
+            if (response.data.status === 'success') {
+                supportFormData.description = ''
+                supportFormData.images = []
+                supportFormData.videos = []
+                ElMessage.success('发布成功')
+                console.log(response.data)
+                supportVisible.value = false
+            }
+            else {
+                ElMessage.error(response.data.message)
+                console.error(response.data)
+            }
+        } catch (error) {
+            ElMessage.error('发布失败，请稍后再试')
+            console.error(error)
+        }
+
+    } catch (error) {
+        ElMessage.error('请求失败，请稍后再试')
+        console.error(error)
+    }
+}
+
+// 取消提交
+const cancelSupport = () => {
+    supportVisible.value = false
+    supportFormData.description = ''
+    supportFormData.images = []
+    supportFormData.videos = []
+}
+
+// 检测上传图片大小
+const beforeImageUpload = (file) => {
+    const isLt5M = file.size / 1024 / 1024 < 5
+    if (!isLt5M) {
+        ElMessage.error('上传图片大小不能超过 5MB!')
+    }
+}
+
+// 检测上传视频大小
+const beforeVideoUpload = (file) => {
+    const isLt100M = file.size / 1024 / 1024 < 100
+    if (!isLt100M) {
+        ElMessage.error('上传视频大小不能超过 100MB!')
+    }
+}
+
+// 图片预览
+const handleImagePreview = (uploadFile) => {
+    dialogImageUrl.value = uploadFile.url
+    previewVisible.value = true
 }
 
 const handleEdit = () => {
@@ -239,6 +381,17 @@ const handleDelete = () => {
         &:hover {
             text-decoration: underline;
         }
+    }
+}
+
+$input-width: 400px;
+
+.el-form {
+    padding: 20px;
+
+    :deep(.el-textarea__inner) {
+        padding: 20px;
+        width: $input-width ;
     }
 }
 </style>

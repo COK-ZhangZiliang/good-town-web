@@ -105,7 +105,8 @@
             </template>
           </el-input>
         </div>
-        <AssistanceComp v-if="activeMenu === 'createAssistance'" />
+        <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
+        <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
       </div>
 
       <!-- 右侧热度榜 -->
@@ -164,19 +165,19 @@
   </el-dialog>
 
   <!-- 发布宣传 -->
-  <PublicityComp v-model:visible="promoteVisible" />
+  <CreatePublicity v-model:visible="promoteVisible" />
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UserFilled, Star, Promotion, Histogram } from '@element-plus/icons-vue'
+import { UserFilled, Star, Promotion, Histogram, Plus, Document } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
-import PublicityComp from '@/components/PublicityComp.vue'
-import AssistanceComp from '@/components/AssistanceComp.vue'
+import CreatePublicity from '@/components/CreatePublicity.vue'
+import ShowPublicity from '@/components/ShowPublicity.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
