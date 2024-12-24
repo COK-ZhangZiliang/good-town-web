@@ -202,15 +202,16 @@ const handleSupport = () => {
 const submitSupport = async () => {
     if (!supportFormRef.value) return
     const token = getToken()
+    const imageUrls = []
+    const videoUrls = []
 
     try {
         await supportFormRef.value.validate()
 
-        const imageUrls = uploadFiles(supportFormData.images, token)
-        const videoUrls = uploadFiles(supportFormData.videos, token)
+        imageUrls.value = uploadFiles(supportFormData.images, token).value
+        videoUrls.value = uploadFiles(supportFormData.videos, token).value
 
         try {
-            console.log(1)
             const response = await axios.post('http://10.29.39.146:8088/api/assistance/create', {
                 token: token,
                 publicity_id: content.value.publicity_id,

@@ -113,12 +113,16 @@ const handleProvinceChange = (value) => {
 const handleSubmit = async () => {
     if (!formRef.value) return
     const token = getToken()
+    const imageUrls = []
+    const videoUrls = []
 
     try {
         await formRef.value.validate()
 
-        const imageUrls = uploadFiles(formData.images, token)
-        const videoUrls = uploadFiles(formData.videos, token)
+        imageUrls.value = uploadFiles(formData.images, token).value
+        videoUrls.value = uploadFiles(formData.videos, token).value
+
+        console.log(imageUrls)
 
         for (let i = 0; i < formData.videos.length; i++) {
             const file = formData.videos[i]
