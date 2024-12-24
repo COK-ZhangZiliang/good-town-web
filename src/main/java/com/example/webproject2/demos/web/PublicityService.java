@@ -14,7 +14,7 @@ public class PublicityService {
 
     public List<Publicity> getMyPublicity(Integer userId) {
         // 查询状态为已发布的宣传信息 (status = 0) 和取消发布的宣传信息 (status = -1)
-        return publicityRepository.findByUserIdAndStatusIn(userId, Arrays.asList(0, -1));
+        return publicityRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, Arrays.asList(0, -1));
     }
 
     public List<Publicity> getReleasedPublicity(Integer userId) {
