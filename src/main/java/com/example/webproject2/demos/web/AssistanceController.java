@@ -222,17 +222,16 @@ public class AssistanceController {
             // 保存助力请求
             assistanceService.saveAssistance(newAssistance);
 
-            // 返回详细的助力信息
-            Map<String, Object> responseData = Map.of(
-                    "assistance_id", newAssistance.getAssistanceId(),
-                    "publicity_id", newAssistance.getPublicityId(),
-                    "description", newAssistance.getDescription(),
-                    "image_url", newAssistance.getImageUrl(),
-                    "video_url", newAssistance.getVideoUrl(),
-                    "status", newAssistance.getStatus(),
-                    "created_at", newAssistance.getCreatedAt(),
-                    "updated_at", newAssistance.getUpdatedAt()
-            );
+            // 修复后的代码，使用 HashMap 构建返回数据
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("assistance_id", newAssistance.getAssistanceId());
+            responseData.put("publicity_id", newAssistance.getPublicityId());
+            responseData.put("description", newAssistance.getDescription());
+            responseData.put("image_url", newAssistance.getImageUrl());
+            responseData.put("video_url", newAssistance.getVideoUrl());
+            responseData.put("status", newAssistance.getStatus());
+            responseData.put("created_at", newAssistance.getCreatedAt());
+            responseData.put("updated_at", newAssistance.getUpdatedAt());
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
@@ -309,17 +308,16 @@ public class AssistanceController {
             assistanceService.updateAssistance(assistance);
 
             // 构建详细响应信息
-            Map<String, Object> responseData = Map.of(
-                    "assistance_id", assistance.getAssistanceId(),
-                    "publicity_id", assistance.getPublicityId(),
-                    "user_id", assistance.getUserId(),
-                    "description", assistance.getDescription(),
-                    "image_url", assistance.getImageUrl(),
-                    "video_url", assistance.getVideoUrl(),
-                    "status", assistance.getStatus(),
-                    "created_at", assistance.getCreatedAt(),
-                    "updated_at", assistance.getUpdatedAt()
-            );
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("assistance_id", assistance.getAssistanceId());
+            responseData.put("publicity_id", assistance.getPublicityId());
+            responseData.put("user_id", assistance.getUserId());
+            responseData.put("description", assistance.getDescription());
+            responseData.put("image_url", assistance.getImageUrl());
+            responseData.put("video_url", assistance.getVideoUrl());
+            responseData.put("status", assistance.getStatus());
+            responseData.put("created_at", assistance.getCreatedAt());
+            responseData.put("updated_at", assistance.getUpdatedAt());
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
