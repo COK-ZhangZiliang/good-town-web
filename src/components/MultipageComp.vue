@@ -2,7 +2,7 @@
 <template>
     <div class="multipage-container">
             <div class="items-container">
-                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" />
+                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" :username="props.username" :type="props.type"/>
             </div>
             <div class="pagination-wrapper">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage"
@@ -21,6 +21,14 @@ const props = defineProps(
     {
         publicityData: {
             type: Array,
+            required: true
+        },
+        username: {
+            type: String,
+            required: true
+        },
+        type: {
+            type: String,
             required: true
         }
     }
