@@ -3,8 +3,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,6 +100,58 @@ public class FileUploadController {
             return result;
         }
     }
+
+
+    // 根据 URL 下载文件
+    @GetMapping("/download")
+    public void downloadFile(@RequestParam("url") String fileUrl, HttpServletResponse response) {
+        try {
+            // 解析文件名
+            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            if (fileName.contains("?")) {
+                fileName = fileName.substring(0, fileName.indexOf("?"));
+            }
+
+            // 确定文件的存储路径
+            File file = new File(uploadDir + "/" + fileName);
+
+            // 检查文件是否存在
+            if (!file.exists()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().write("文件不存在");
+                return;
+            }
+
+            // 对文件名进行 URL 编码，避免中文或特殊字符导致问题
+            String encodedFileName = URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
+
+            // 设置响应头
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"");
+            response.setContentLength((int) file.length());
+
+            // 写入文件内容到响应
+            try (FileInputStream fis = new FileInputStream(file);
+                 OutputStream os = response.getOutputStream()) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                os.flush();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("文件下载失败：" + e.getMessage());
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+
 
 }
 
