@@ -4,12 +4,14 @@
     <!-- 头部：用户头像、用户名、更新时间 -->
     <div class="header">
       <template v-if="user.avatarUrl">
-        <el-avatar :size="40" class="avatar">
+        <el-avatar :size="40" class="avatar" :class="{ 'clickable': props.type === 'adminQuery' }"
+          @click="handleAvatarClick">
           <img :src="user.avatarUrl" />
         </el-avatar>
       </template>
       <template v-else>
-        <el-avatar :size="40" class="avatar">
+        <el-avatar :size="40" class="avatar" :class="{ 'clickable': props.type === 'adminQuery' }"
+          @click="handleAvatarClick">
           <el-icon>
             <UserFilled />
           </el-icon>
@@ -80,6 +82,36 @@
     </div>
   </div>
 
+  <!-- 用户信息对话框 -->
+  <el-dialog v-model="userInfoVisible" title="用户信息" width="400px">
+    <div class="user-detail">
+      <div class="user-avatar">
+        <el-avatar :size="80" :src="user.avatarUrl">
+          <el-icon v-if="!user.avatarUrl">
+            <UserFilled />
+          </el-icon>
+        </el-avatar>
+      </div>
+
+      <div class="user-info">
+        <div class="info-item">
+          <div class="label">用户名</div>
+          <div class="value">{{ user.username }}</div>
+        </div>
+
+        <div class="info-item">
+          <div class="label">手机号</div>
+          <div class="value">{{ user.phone }}</div>
+        </div>
+
+        <div class="info-item">
+          <div class="label">个人简介</div>
+          <div class="value bio">{{ user.bio || '暂无简介' }}</div>
+        </div>
+      </div>
+    </div>
+  </el-dialog>
+
   <!-- 助力信息详情对话框 -->
   <AssistanceInfo v-model:dialog-visible="assistanceInfoVisible" :assistance="selectedAssistance"
     @success="handleAssistSuccess" />
@@ -136,6 +168,8 @@ const assistanceInfoVisible = ref(false);
 const selectedAssistance = ref(null);
 
 const editVisible = ref(false);
+
+const userInfoVisible = ref(false);
 
 // 展示详细助力信息
 const showAssistDetail = (ass) => {
@@ -210,6 +244,12 @@ const handleDelete = async () => {
 const handleAssistSuccess = () => {
   emits('refresh');
 };
+
+const handleAvatarClick = () => {
+  if (props.type === 'adminQuery') {
+    userInfoVisible.value = true;
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -231,6 +271,15 @@ const handleAssistSuccess = () => {
     height: 40px;
     border-radius: 50%;
     margin-right: 8px;
+
+    .clickable {
+      cursor: pointer;
+      transition: opacity 0.3s;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
   }
 
   .username {
@@ -327,6 +376,37 @@ const handleAssistSuccess = () => {
 
       &:hover {
         color: #409EFF;
+      }
+    }
+  }
+}
+
+.user-detail {
+  padding: 20px;
+
+  .user-avatar {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .user-info {
+    .info-item {
+      margin-bottom: 15px;
+
+      .label {
+        color: #909399;
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .value {
+        color: #303133;
+        font-size: 14px;
+
+        &.bio {
+          white-space: pre-wrap;
+          line-height: 1.5;
+        }
       }
     }
   }

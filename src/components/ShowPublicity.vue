@@ -30,7 +30,7 @@ const loading = ref(true)
 
 // 获取所有宣传信息
 const getAllPublicity = async () => {
-    if (props.type === "allPromotions") {
+    if (props.type === "allPromotions" || props.type === "adminQuery") {
         try {
             loading.value = true
 

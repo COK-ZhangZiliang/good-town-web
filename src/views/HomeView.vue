@@ -141,7 +141,9 @@
         <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
         <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
         <ShowAssistance v-if="activeMenu === 'myAssistance'" />
-        <showUser v-if="activeMenu === 'queryUsers'" />
+        <showUser v-if="activeMenu === 'queryUsers'" :type="'myAssistance'"/>
+        <ShowPublicity v-if="activeMenu === 'queryPublicity'" :type="'adminQuery'" />
+        <ShowAssistance v-if="activeMenu === 'queryAssistance'" :type="'allAssistance'"/>
       </div>
 
       <!-- 右侧热度榜 -->

@@ -2,14 +2,14 @@
 <template>
     <div class="multipage-container">
         <div class="items-container">
-            <template v-if="props.type !== 'myAssistance'">
+            <template v-if="props.type === 'myPromotions' || props.type === 'allPromotions' || props.type === 'adminQuery'">
                 <PublicityItem v-for="item in currentPageItems"
                     :key="`publicity-${item.id}`" :content="item" :username="props.username" :type="props.type"
                     @refresh="fetchData" />
             </template>
             <template v-else>
                 <AssistanceItem v-for="item in currentPageItems" :key="`assistance-${item.id}`" :content="item"
-                    @refresh="fetchData" />
+                    @refresh="fetchData" :type="props.type" />
             </template>
         </div>
         <div class="pagination-wrapper">
