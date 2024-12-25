@@ -143,6 +143,7 @@ const submitSupport = async () => {
                     ElMessage.success("发布成功");
                     console.log(response.data);
                     dialogVisible.value = false;
+                    emits("success")
                 } else {
                     ElMessage.error(response.data.message);
                     console.error(response.data);
