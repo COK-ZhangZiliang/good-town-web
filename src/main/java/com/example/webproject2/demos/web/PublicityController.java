@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
+
+
+
 @RestController
 @RequestMapping("/api/publicity")
 @Getter
@@ -722,4 +725,343 @@ public class PublicityController {
     }
 
 
+
+
+    // 在所有宣传信息中搜索
+    @PostMapping("/search")
+    public ResponseEntity<?> searchPublicity(@RequestBody Map<String, Object> requestBody)
+    {
+        try {
+            // 获取搜索关键字
+            String keyword = (String) requestBody.get("keyword");
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请输入搜索关键字"));
+            }
+            keyword = keyword.trim();
+
+
+            // 查询所有状态为已发布（status = 0）的宣传信息
+            List<Publicity> publicityList = publicityService.getPublicityByStatus(0);
+
+            // 宣传信息构造响应数据
+            List<Map<String, Object>> responseData = new ArrayList<>();
+            for (Publicity publicity : publicityList) {
+                // 检查关键字是否匹配
+                boolean match = false;
+
+                Map<String, Object> publicityData = new HashMap<>();
+                publicityData.put("publicity_id", publicity.getPublicityId());
+                publicityData.put("town_id", publicity.getTownId());
+                publicityData.put("title", publicity.getTitle());
+                publicityData.put("type", publicity.getType());
+                publicityData.put("description", publicity.getDescription());
+
+                if (publicity.getTitle().contains(keyword) || publicity.getDescription().contains(keyword)) {
+                    match = true;
+                }
+                // 将 type 转换为中文
+                String typeChinese = Constants.TYPE_MAP.getOrDefault(publicity.getType(), "未知类型");
+                if (typeChinese.contains(keyword) || publicity.getType().contains(keyword)) {
+                    match = true;
+                }
+
+                // 解析 image_url 和 video_url 为数组或列表
+                String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+                if (imageUrls != null && !imageUrls.isEmpty()) {
+                    String[] imageUrlArray = imageUrls.split(";");
+                    publicityData.put("image_url", imageUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("image_url", new String[0]); // 空数组
+                }
+
+                String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+                if (videoUrls != null && !videoUrls.isEmpty()) {
+                    String[] videoUrlArray = videoUrls.split(";");
+                    publicityData.put("video_url", videoUrlArray); // 转为数组形式
+                } else {
+                    publicityData.put("video_url", new String[0]); // 空数组
+                }
+
+                publicityData.put("created_at", publicity.getCreatedAt());
+                publicityData.put("updated_at", publicity.getUpdatedAt());
+
+                // 获取 townId 并查询 Towns 表
+                Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+                if (townId != null) {
+                    Optional<Towns> townOptional = townRepository.findById(townId);
+                    if (townOptional.isPresent()) {
+                        Towns town = townOptional.get();
+                        publicityData.put("town_name", town.getTownName());
+                        publicityData.put("city", town.getCity());
+                        publicityData.put("province", town.getProvince());
+
+                        // 检查关键字匹配
+                        if (town.getProvince().contains(keyword) ||
+                                town.getCity().contains(keyword) ||
+                                town.getTownName().contains(keyword)) {
+                            match = true;
+                        }
+
+                    }
+                }
+
+                // 获取宣传者的详细信息
+                Integer userId = publicity.getUserId(); // 假设 Publicity 有 userId 字段
+                if (userId != null) {
+                    Optional<Users> userOptional = userRepository.findById(userId);
+                    if (userOptional.isPresent()) {
+                        Users user = userOptional.get();
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("userId", user.getUserId());
+                        userData.put("username", user.getUsername());
+                        userData.put("phone", user.getPhone());
+                        userData.put("bio", user.getBio());
+                        userData.put("avatarUrl", user.getAvatarUrl());
+
+                        // 将用户信息添加到宣传信息中
+                        publicityData.put("user", userData);
+
+                        // 检查关键字匹配
+                        if (user.getUsername().contains(keyword)) {
+                            match = true;
+                        }
+                    }
+                }
+
+                // 查询该宣传信息下的助力请求
+                List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicity.getPublicityId());
+
+                // 构造助力请求数据
+                List<Map<String, Object>> assistanceDataList = new ArrayList<>();
+                for (Assistance assistance : assistanceRequests) {
+                    if (assistance.getStatus() == 1) // 只返回已接受的助力请求
+                    {
+
+                        Map<String, Object> assistanceData = new HashMap<>();
+                        assistanceData.put("assistance_id", assistance.getAssistanceId());
+                        assistanceData.put("user_id", assistance.getUserId());
+                        assistanceData.put("description", assistance.getDescription());
+
+                        // 处理 image_url 字段，分割为数组形式
+                        String rawImageUrls = assistance.getImageUrl();
+                        if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                            List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                            assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                        }
+
+                        // 处理 video_url 字段，分割为数组形式
+                        String rawVideoUrls = assistance.getVideoUrl();
+                        if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                            List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                            assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                        }
+
+                        assistanceData.put("status", assistance.getStatus());
+
+                        // 查询请求用户的信息
+                        userRepository.findById(assistance.getUserId()).ifPresent(user -> {
+                            assistanceData.put("user_name", user.getUsername());
+                        });
+
+                        assistanceDataList.add(assistanceData);
+                    }
+                }
+
+                publicityData.put("assistance_requests", assistanceDataList);
+
+
+                // 如果匹配关键字，添加到结果中
+                if (match) {
+                    responseData.add(publicityData);
+                }
+
+            }
+
+            return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
+
+        } catch (Exception e){
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
+
+
+
+
+    // 在自己的宣传信息中搜索
+    @PostMapping("/search/my")
+    public ResponseEntity<?> searchMyPublicity(@RequestHeader(value = "token", required = false) String headerToken,
+                                               @RequestBody Map<String, Object> requestBody) {
+        try {
+            // 获取 token
+            String token = headerToken != null ? headerToken : (String) requestBody.get("token");
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            }
+            // 验证 token 并获取 userId
+            Integer userId = TokenService.validateToken(token);
+            if (userId == null) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
+            }
+
+            // 获取搜索关键字
+            String keyword = (String) requestBody.get("keyword");
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请输入搜索关键字"));
+            }
+            keyword = keyword.trim();
+
+            // 获取用户的宣传信息
+            List<Publicity> publicityList = null;
+            try {
+                publicityList = publicityService.getMyPublicity(userId);
+                if (publicityList == null || publicityList.isEmpty()) {
+                    System.out.println("Fetched publicityList is empty or null.");
+                } else {
+                    System.out.println("Fetched publicityList: " + publicityList);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error: " + e.getMessage());
+            }
+
+            // 构造响应数据
+            List<Map<String, Object>> responseData = new ArrayList<>();
+            if (publicityList != null) {
+                for (Publicity publicity : publicityList) {
+                    // 检查关键字是否匹配
+                    boolean match = false;
+
+                    Map<String, Object> publicityData = new HashMap<>();
+                    publicityData.put("publicity_id", publicity.getPublicityId());
+                    publicityData.put("town_id", publicity.getTownId());
+                    publicityData.put("type", publicity.getType());
+                    publicityData.put("title", publicity.getTitle());
+                    publicityData.put("description", publicity.getDescription());
+
+                    if (publicity.getTitle().contains(keyword) || publicity.getDescription().contains(keyword)) {
+                        match = true;
+                    }
+                    // 将 type 转换为中文
+                    String typeChinese = Constants.TYPE_MAP.getOrDefault(publicity.getType(), "未知类型");
+                    if (typeChinese.contains(keyword) || publicity.getType().contains(keyword)) {
+                        match = true;
+                    }
+
+                    // 解析 image_url 和 video_url 为数组或列表
+                    String imageUrls = publicity.getImageUrl(); // 从数据库获取原始 image_url 字段
+                    if (imageUrls != null && !imageUrls.isEmpty()) {
+                        String[] imageUrlArray = imageUrls.split(";");
+                        publicityData.put("image_url", imageUrlArray); // 转为数组形式
+                    } else {
+                        publicityData.put("image_url", new String[0]); // 空数组
+                    }
+
+                    String videoUrls = publicity.getVideoUrl(); // 从数据库获取原始 video_url 字段
+                    if (videoUrls != null && !videoUrls.isEmpty()) {
+                        String[] videoUrlArray = videoUrls.split(";");
+                        publicityData.put("video_url", videoUrlArray); // 转为数组形式
+                    } else {
+                        publicityData.put("video_url", new String[0]); // 空数组
+                    }
+
+                    publicityData.put("created_at", publicity.getCreatedAt());
+                    publicityData.put("updated_at", publicity.getUpdatedAt());
+                    publicityData.put("status", publicity.getStatus());
+
+                    // 获取 townId 并查询 Towns 表
+                    Integer townId = publicity.getTownId(); // 假设 Publicity 有 townId 字段
+                    if (townId != null) {
+                        Optional<Towns> townOptional = townRepository.findById(townId);
+                        if (townOptional.isPresent()) {
+                            Towns town = townOptional.get();
+                            publicityData.put("town_name", town.getTownName());
+                            publicityData.put("city", town.getCity());
+                            publicityData.put("province", town.getProvince());
+
+                            // 检查关键字匹配
+                            if (town.getProvince().contains(keyword) ||
+                                    town.getCity().contains(keyword) ||
+                                    town.getTownName().contains(keyword)) {
+                                match = true;
+                            }
+                        }
+                    }
+
+                    // 获取宣传者的详细信息
+                    Optional<Users> userOptional = userRepository.findById(userId);
+                    if (userOptional.isPresent()) {
+                        Users user = userOptional.get();
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("userId", user.getUserId());
+                        userData.put("username", user.getUsername());
+                        userData.put("phone", user.getPhone());
+                        userData.put("bio", user.getBio());
+                        userData.put("avatarUrl", user.getAvatarUrl());
+
+                        // 将用户信息添加到宣传信息中
+                        publicityData.put("user", userData);
+                    }
+
+                    // 查询该宣传信息下的助力请求
+                    List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicity.getPublicityId());
+
+                    // 构造助力请求数据
+                    List<Map<String, Object>> assistanceDataList = new ArrayList<>();
+                    for (Assistance assistance : assistanceRequests) {
+                        if (assistance.getStatus() == 2 || assistance.getStatus() == 3) // 只返回已接受或待处理的
+                            continue;
+
+                        Map<String, Object> assistanceData = new HashMap<>();
+                        assistanceData.put("assistance_id", assistance.getAssistanceId());
+                        assistanceData.put("user_id", assistance.getUserId());
+                        assistanceData.put("description", assistance.getDescription());
+
+                        // 处理 image_url 字段，分割为数组形式
+                        String rawImageUrls = assistance.getImageUrl();
+                        if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                            List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                            assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                        }
+
+                        // 处理 video_url 字段，分割为数组形式
+                        String rawVideoUrls = assistance.getVideoUrl();
+                        if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                            List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                            assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                        } else {
+                            assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                        }
+
+                        assistanceData.put("status", assistance.getStatus());
+
+                        // 查询请求用户的信息
+                        userRepository.findById(assistance.getUserId()).ifPresent(user -> {
+                            assistanceData.put("user_name", user.getUsername());
+                        });
+
+                        assistanceDataList.add(assistanceData);
+                    }
+
+                    publicityData.put("assistance_requests", assistanceDataList);
+
+
+                    // 如果匹配关键字，添加到结果中
+                    if (match) {
+                        responseData.add(publicityData);
+                    }
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
 }
