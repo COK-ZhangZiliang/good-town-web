@@ -130,20 +130,13 @@
 
       <!-- 中间内容区 -->
       <div class="content">
-        <div class="search">
-          <el-input v-model="searchQuery" placeholder="搜索..." prefix-icon="Search" clearable
-            @keyup.enter="handleSearch">
-            <template #append>
-              <el-button @click="handleSearch">搜索</el-button>
-            </template>
-          </el-input>
-        </div>
         <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
         <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
         <ShowAssistance v-if="activeMenu === 'myAssistance'" />
         <showUser v-if="activeMenu === 'queryUsers'" :type="'myAssistance'"/>
         <ShowPublicity v-if="activeMenu === 'queryPublicity'" :type="'adminQuery'" />
         <ShowAssistance v-if="activeMenu === 'queryAssistance'" :type="'allAssistance'"/>
+        <ShowStatistics v-if="activeMenu === 'statistics'" />
       </div>
 
       <!-- 右侧热度榜 -->
@@ -204,10 +197,10 @@ import ShowPublicity from '@/components/ShowPublicity.vue'
 import ShowAssistance from '@/components/ShowAssistance.vue'
 import ShowUser from '@/components/ShowUser.vue'
 import PopularityBoard from '@/components/PopularityBoard.vue'
+import ShowStatistics from '@/components/ShowStatistics.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
-const searchQuery = ref('')
 const activeMenu = ref('createAssistance')
 const router = useRouter()
 const updateVisible = ref(false)
@@ -327,11 +320,6 @@ onMounted(() => {
     getUserInfo()
   }
 })
-
-// 处理搜索
-const handleSearch = () => {
-  console.log('搜索:', searchQuery.value)
-}
 
 // 处理菜单选择
 const handleMenuSelect = (index) => {
@@ -475,14 +463,9 @@ $hot-color: #ff6b6b;
 .content {
   flex: 1;
   padding: 80px;
+  padding-top: 20px;
   background-color: #f5f7fa;
   overflow-y: auto;
-
-  .search {
-    flex: 1;
-    max-width: 500px;
-    margin: 20px auto;
-  }
 }
 
 .right-sidebar {
