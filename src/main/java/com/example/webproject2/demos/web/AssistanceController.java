@@ -119,8 +119,8 @@ public class AssistanceController {
 
             List<Map<String, Object>> responseData = new ArrayList<>();
             for (Assistance assistance : assistanceList) {
-                if (assistance.getStatus() == 2 || assistance.getStatus() == 3)
-                    continue; // 跳过已拒绝和已取消
+                if (assistance.getStatus() == 3)
+                    continue; // 跳过已取消
 
                 Map<String, Object> assistanceData = new HashMap<>();
                 assistanceData.put("assistance_id", assistance.getAssistanceId());
@@ -451,8 +451,8 @@ public class AssistanceController {
 
             List<Map<String, Object>> responseData = new ArrayList<>();
             for (Assistance assistance : assistanceList) {
-                if (assistance.getStatus() == 2 || assistance.getStatus() == 3)
-                    continue; // 跳过已拒绝和已取消
+                if (assistance.getStatus() == 3)
+                    continue; // 跳过已取消
 
                 // 检查关键字是否匹配
                 boolean match = false;
@@ -510,6 +510,23 @@ public class AssistanceController {
                             }
                         }
                     }
+                }
+
+                // 获取助力者个人信息
+                userId = assistance.getUserId();
+                System.out.println("userId: " + userId);
+                Optional<Users> userOptional = userRepository.findById(userId);
+                if (userOptional.isPresent()) {
+                    Users user = userOptional.get();
+                    Map<String, Object> userData = new HashMap<>();
+                    userData.put("userId", user.getUserId());
+                    userData.put("username", user.getUsername());
+                    userData.put("phone", user.getPhone());
+                    userData.put("bio", user.getBio());
+                    userData.put("avatarUrl", user.getAvatarUrl());
+
+                    // 将用户信息添加到宣传信息中
+                    assistanceData.put("user", userData);
                 }
 
                 // 检查描述字段是否匹配
