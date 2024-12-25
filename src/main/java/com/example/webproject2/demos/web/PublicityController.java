@@ -152,7 +152,7 @@ public class PublicityController {
 
                         // 查询请求用户的信息
                         userRepository.findById(assistance.getUserId()).ifPresent(user -> {
-                            assistanceData.put("user_name", user.getName());
+                            assistanceData.put("user_name", user.getUsername());
                         });
 
                         assistanceDataList.add(assistanceData);
@@ -379,7 +379,7 @@ public class PublicityController {
 
                     // 查询请求用户的信息
                     userRepository.findById(assistance.getUserId()).ifPresent(user -> {
-                        assistanceData.put("user_name", user.getName());
+                        assistanceData.put("user_name", user.getUsername());
                     });
 
                     assistanceDataList.add(assistanceData);
@@ -637,7 +637,7 @@ public class PublicityController {
 
                         // 查询请求用户的信息
                         userRepository.findById(assistance.getUserId()).ifPresent(user -> {
-                            assistanceData.put("user_name", user.getName());
+                            assistanceData.put("user_name", user.getUsername());
                         });
 
                         assistanceDataList.add(assistanceData);
