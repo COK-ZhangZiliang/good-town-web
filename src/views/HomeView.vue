@@ -193,7 +193,7 @@
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UserFilled, Star, Promotion, Plus, Document, Setting, User } from '@element-plus/icons-vue'
+import { UserFilled, Star, Promotion, Plus, Document, Setting, User, Histogram } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
