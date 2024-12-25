@@ -165,7 +165,7 @@
   </el-dialog>
 
   <!-- 发布宣传 -->
-  <CreatePublicity v-model:visible="promoteVisible" />
+  <CreatePublicity v-if="promoteVisible" v-model:visible="promoteVisible" />
 </template>
 
 <script setup>
