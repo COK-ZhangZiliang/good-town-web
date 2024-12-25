@@ -82,6 +82,27 @@ const formRef = ref(null)
 const dialogImageUrl = ref('')
 const previewVisible = ref(false)
 
+// 接收变量
+const props = defineProps({
+    visible: {
+        type: Boolean,
+        default: false
+    },
+    editData: {
+        type: Object,
+        required: false
+    }
+})
+
+const emits = defineEmits(['update:visible'], ['success'])
+
+const dialogVisible = computed({
+    get: () => props.visible,
+    set: (value) => {
+        emits('update:visible', value)
+    }
+})
+
 const formData = reactive({
     province: '',
     city: '',
@@ -210,27 +231,6 @@ const handleImagePreview = (uploadFile) => {
     dialogImageUrl.value = uploadFile.url
     previewVisible.value = true
 }
-
-// 接收变量
-const props = defineProps({
-    visible: {
-        type: Boolean,
-        default: false
-    },
-    editData: {
-        type: Object,
-        required: false
-    }
-})
-
-const emits = defineEmits(['update:visible'], ['success'])
-
-const dialogVisible = computed({
-    get: () => props.visible,
-    set: (value) => {
-        emits('update:visible', value)
-    }
-})
 
 onMounted(() => {
     if (props.editData) {
