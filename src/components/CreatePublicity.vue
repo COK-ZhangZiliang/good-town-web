@@ -136,8 +136,12 @@ const handleSubmit = async () => {
     const token = getToken()
 
     try {
-        await formRef.value.validate()
+        await formRef.value.validate();
+    } catch (error) {
+        return
+    }
 
+    try {
         const imageUrls = await uploadFiles(formData.images, token)
         const videoUrls = await uploadFiles(formData.videos, token)
 
