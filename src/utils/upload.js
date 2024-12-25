@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus'
  * @returns {Promise<string>} 文件URL
  */
 async function uploadSingleFile(file, token) {
-  if (file.url.startsWith('http://localhost:8088/') || file.url.startsWith('http://10.29.39.146:8088')) {
+  if (file.url?.startsWith('http://localhost:8088/') || file.url?.startsWith('http://10.29.39.146:8088')) {
     return file.url // 文件已经上传过
   }
 

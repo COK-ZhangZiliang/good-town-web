@@ -107,6 +107,7 @@
         </div>
         <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
         <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
+        <ShowAssistance v-if="activeMenu === 'myAssistance'" />
       </div>
 
       <!-- 右侧热度榜 -->
@@ -178,6 +179,7 @@ import { removeToken } from '@/utils/auth'
 import axios from 'axios'
 import CreatePublicity from '@/components/CreatePublicity.vue'
 import ShowPublicity from '@/components/ShowPublicity.vue'
+import ShowAssistance from '@/components/ShowAssistance.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
@@ -405,12 +407,12 @@ $hot-color: #ff6b6b;
       object-fit: contain;
     }
   }
-  
+
   .user-info {
     .username {
-        font-weight: bold;
-        margin-left: 8px;
-        font-size: large;
+      font-weight: bold;
+      margin-left: 8px;
+      font-size: large;
     }
   }
 }

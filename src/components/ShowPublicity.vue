@@ -2,7 +2,7 @@
 <template>
     <div>
         <el-loading v-if="loading" />
-        <MultipageComp :publicity-data="publicityData" :username="props.username" :type="props.type"
+        <MultipageComp :data="publicityData" :username="props.username" :type="props.type"
             @refresh="getAllPublicity" />
     </div>
 </template>
