@@ -1,6 +1,6 @@
 <!-- 助力信息展示对话框 -->
 <template>
-    <el-dialog v-model="dialogVisible" title="助力详情" width="50%">
+    <el-dialog v-model="dialogVisible" title="助力详情" width="500px">
         <div v-if="assistance" class="assistance-detail">
             <div class="detail-item">
                 <span class="label">助力描述：</span>
@@ -21,11 +21,30 @@
                 </div>
             </div>
         </div>
+
+        <template #footer>
+            <div v-if="assistance?.status === 0" class="dialog-footer">
+                <el-button type="success" @click="handleAccept">
+                    <el-icon>
+                        <Check />
+                    </el-icon>接受
+                </el-button>
+                <el-button type="danger" @click="handleReject">
+                    <el-icon>
+                        <Close />
+                    </el-icon>拒绝
+                </el-button>
+            </div>
+        </template>
     </el-dialog>
 </template>
 
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Check, Close } from '@element-plus/icons-vue'
+import axios from 'axios'
+import { getToken } from '@/utils/auth'
 
 // 接收数据
 const props = defineProps({
@@ -35,20 +54,84 @@ const props = defineProps({
 
 const emits = defineEmits(['update:dialogVisible'])
 
-const dialogVisible = computed ({
+const dialogVisible = computed({
     get: () => props.dialogVisible,
     set: (value) => emits('update:dialogVisible', value)
 })
 
 const assistance = computed(() => props.assistance)
+
+const handleAccept = () => {
+    ElMessageBox.confirm('确定接受该助力吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(async () => {
+        try {
+            const response = await axios.post(
+                "http://10.29.39.146:8088/api/assistance/update",
+                {
+                    token: getToken(),
+                    assistance_id: props.assistance.assistance_id,
+                    action: 1
+                }
+            );
+            if (response.data.status === "success") {
+                ElMessage.success('已接受')
+                console.log(response.data);
+                dialogVisible.value = false;
+                emits("success")
+            } else {
+                ElMessage.error(response.data.message);
+                console.error(response.data);
+            }
+        } catch (error) {
+            ElMessage.error("接受失败，请稍后再试");
+            console.error(error);
+        }
+    })
+}
+
+const handleReject = () => {
+    ElMessageBox.confirm('确定拒绝该助力吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+    }).then(async () => {
+        try {
+            const response = await axios.post(
+                "http://10.29.39.146:8088/api/assistance/update",
+                {
+                    token: getToken(),
+                    assistance_id: props.assistance.assistance_id,
+                    action: 2
+                }
+            );
+            if (response.data.status === "success") {
+                ElMessage.success('已拒绝')
+                console.log(response.data);
+                dialogVisible.value = false;
+                emits("success")
+            } else {
+                ElMessage.error(response.data.message);
+                console.error(response.data);
+            }
+        } catch (error) {
+            ElMessage.error("拒绝失败，请稍后再试");
+            console.error(error);
+        }
+    })
+}
 </script>
 
 <style lang="scss" scoped>
 .assistance-detail {
     padding: 20px;
+    font-size: 16px;
 
     .detail-item {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        line-height: 1.5; // 增加行高
     }
 
     .label {
@@ -58,22 +141,22 @@ const assistance = computed(() => props.assistance)
     }
 
     .media-container {
-        margin-top: 15px;
-
-        .images,
-        .videos {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .media-item {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
+    margin: 20px 0;
+    
+    .images, .videos {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
     }
+
+    .media-item {
+        width: 300px;
+        height: 225px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+}
 }
 </style>
