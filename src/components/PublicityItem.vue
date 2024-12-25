@@ -65,20 +65,28 @@
           </el-button>
         </template>
       </div>
+    </div>
+    <div class="support-users" v-if="acceptedAssist.length">
+      <span class="support-label">已接受助力:</span>
+      <span v-for="(ass, index) in acceptedAssist" :key="index" class="support-name" @click="showAssistDetail(ass)">
+        {{ ass.user_name }}{{ index < acceptedAssist.length - 1 ? "," : "" }} </span>
+    </div>
 
-      <div class="support-users" v-if="assist.length">
-        <span class="support-label">已接受助力:</span>
-        <span v-for="(ass, index) in assist" :key="index" class="support-name" @click="showAssistDetail(ass)">
-          {{ ass.user_name }}{{ index < assist.length - 1 ? "," : "" }} </span>
-      </div>
+    <div class="support-users pending" v-if="pendingAssist.length">
+      <span class="support-label">待接受助力:</span>
+      <span v-for="(ass, index) in pendingAssist" :key="index" class="support-name pending"
+        @click="showAssistDetail(ass)">
+        {{ ass.user_name }}{{ index < pendingAssist.length - 1 ? "," : "" }} </span>
     </div>
   </div>
 
   <!-- 助力信息详情对话框 -->
-  <AssistanceInfo v-model:dialog-visible="assistanceInfoVisible" :assistance="selectedAssistance" />
+  <AssistanceInfo v-model:dialog-visible="assistanceInfoVisible" :assistance="selectedAssistance"
+    @success="handleAssistSuccess" />
 
   <!-- 创建助力 -->
-  <CreateAssistance v-if="supportVisible" v-model:visible="supportVisible" :publicity_id="content.publicity_id" />
+  <CreateAssistance v-if="supportVisible" v-model:visible="supportVisible" :publicity_id="content.publicity_id"
+    @success="handleAssistSuccess" />
 
   <!-- 修改宣传信息 -->
   <CreatePublicity v-if="editVisible" v-model:visible="editVisible" :editData="content" @success="handleEditSuccess" />
@@ -120,6 +128,9 @@ const imageUrls = computed(() => content.value.image_url || []);
 const videoUrls = computed(() => content.value.video_url || []);
 const user = computed(() => content.value.user || {});
 const assist = computed(() => content.value.assistance_requests || {});
+
+const acceptedAssist = computed(() => assist.value.filter(item => item.status === 1))
+const pendingAssist = computed(() => assist.value.filter(item => item.status === 0))
 
 const assistanceInfoVisible = ref(false);
 const selectedAssistance = ref(null);
@@ -194,6 +205,10 @@ const handleDelete = async () => {
     .catch(() => {
       ElMessage.info('已取消删除')
     })
+};
+
+const handleAssistSuccess = () => {
+  emits('refresh');
 };
 </script>
 
@@ -289,15 +304,30 @@ const handleDelete = async () => {
 }
 
 .support-users {
-  margin-top: 8px;
+  margin-top: 10px;
+  text-align: left; // 添加左对齐
+  display: flex; // 使用flex布局
+  align-items: center;
+  gap: 5px; // 设置间距
+
+  &.pending {
+    margin-top: 5px;
+    color: #909399;
+  }
+
+  .support-label {
+    white-space: nowrap; // 防止标签换行
+  }
 
   .support-name {
-    color: #409eff;
     cursor: pointer;
-    margin: 0 4px;
 
-    &:hover {
-      text-decoration: underline;
+    &.pending {
+      color: #909399;
+
+      &:hover {
+        color: #409EFF;
+      }
     }
   }
 }
