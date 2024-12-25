@@ -244,7 +244,7 @@ public class AssistanceController {
                 newAssistance.setVideoUrl(null); // 如果为空，保存为 null
             }
 
-            newAssistance.setStatus(3); // 初始状态为 3: 取消（还未发布出去）
+            newAssistance.setStatus(0); // 初始状态为 0: 已发布 未接受
             newAssistance.setCreatedAt(LocalDateTime.now());
             newAssistance.setUpdatedAt(LocalDateTime.now());
 
