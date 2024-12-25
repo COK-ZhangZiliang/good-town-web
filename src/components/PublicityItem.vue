@@ -353,29 +353,43 @@ const handleAvatarClick = () => {
 }
 
 .support-users {
-  margin-top: 10px;
-  text-align: left; // 添加左对齐
-  display: flex; // 使用flex布局
-  align-items: center;
-  gap: 5px; // 设置间距
-
-  &.pending {
-    margin-top: 5px;
-    color: #909399;
-  }
-
+  margin-top: 5px;
+  padding: 5px;
+  border-radius: 6px;
+  text-align: left;
+  
   .support-label {
-    white-space: nowrap; // 防止标签换行
+    font-weight: bold;
+    color: #606266;
+    margin-right: 8px;
+    font-size: 14px;
   }
 
   .support-name {
+    color: #409EFF;
     cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    
+    &:hover {
+      color: #66b1ff;
+      text-decoration: underline;
+    }
+  }
 
-    &.pending {
-      color: #909399;
-
+  &.pending {
+    background-color: #fdf6ec;
+    border: 1px solid #faecd8;
+    
+    .support-label {
+      color: #e6a23c;
+    }
+    
+    .support-name {
+      color: #e6a23c;
+      
       &:hover {
-        color: #409EFF;
+        color: #ebb563;
       }
     }
   }
