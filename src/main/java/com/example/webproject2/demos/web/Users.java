@@ -43,7 +43,7 @@ public class Users {
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @Column(nullable = false, columnDefinition = "TINYINT DEFAULT 0")
-    private Byte userType = 0;  // 默认是 0，表示普通用户
+    private Byte userType = 0;  // 默认是 0，表示普通用户，1 表示管理员
 
     @Column(length = 2550, columnDefinition = "VARCHAR(2550) DEFAULT NULL")
     private String avatarUrl;  // 头像 URL，默认为 null

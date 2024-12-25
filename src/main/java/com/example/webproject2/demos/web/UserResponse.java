@@ -21,10 +21,17 @@ public class UserResponse {
     }
 
     // 构造函数（用于错误响应）
-    public UserResponse(String status, String message, List<String> errorMessages) {
+    public UserResponse(String status, String message, List<String> errorMessages, boolean isError) {
         this.status = status;
         this.message = message;
         this.errorMessages = errorMessages;
+    }
+
+    // 构造函数，用语所有用户信息的响应
+    public UserResponse(String status, String message, List<UserData> userDataList) {
+        this.status = status;
+        this.message = message;
+        this.data = userDataList;
     }
 
     // 构造函数（用于带错误码的错误响应）

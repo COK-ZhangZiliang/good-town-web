@@ -41,7 +41,7 @@ public class UserController {
             System.out.println("Validation errors: " + errorMessages);
 
             // 创建统一的错误响应
-            UserResponse errorResponse = new UserResponse("error", "验证失败", errorMessages);
+            UserResponse errorResponse = new UserResponse("error", "验证失败", errorMessages, true);
 
             // 返回包含验证错误的响应体
             return ResponseEntity.ok(errorResponse);
@@ -315,4 +315,58 @@ public class UserController {
     }
 
 
+    // 获取所有用户信息接口，仅限管理员访问
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUsers(@RequestHeader(value = "token") String token) {
+        // 验证 token
+        if (token == null || token.isEmpty()) {
+            UserResponse errorResponse = new UserResponse("error", "请登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 验证 token 并获取 userId
+        Integer userId = TokenService.validateToken(token);
+        if (userId == null) {
+            UserResponse errorResponse = new UserResponse("error", "登录过期，请重新登录", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 获取用户信息
+        Optional<Users> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            UserResponse errorResponse = new UserResponse("error", "用户不存在", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        Users user = userOptional.get();
+
+        // 检查用户是否是管理员
+        if (user.getUserType() != 1) {
+            UserResponse errorResponse = new UserResponse("error", "权限不足，仅管理员可以访问此接口", (UserResponse.UserData) null);
+            return ResponseEntity.ok(errorResponse);
+        }
+
+        // 获取所有用户信息
+        List<Users> users = userRepository.findAll();
+        List<UserResponse.UserData> userDataList = new ArrayList<>();
+
+        // 转换用户信息为 UserData 格式
+        for (Users u : users) {
+            UserResponse.UserData userData = new UserResponse.UserData(
+                    u.getUserId(),
+                    u.getUsername(),
+                    u.getName(),
+                    u.getIdType(),
+                    u.getIdNumber(),
+                    u.getPhone(),
+                    u.getBio(),
+                    u.getAvatarUrl(),
+                    u.getUserType()
+            );
+            userDataList.add(userData);
+        }
+
+        // 返回所有用户的详细信息
+        return ResponseEntity.ok(new UserResponse("success", "所有用户信息获取成功", userDataList));
+    }
 }
