@@ -1,15 +1,14 @@
 <!-- 发布助力对话框 -->
 <template>
     <el-dialog v-model="dialogVisible" title="添加助力信息" width="600px" :close-on-click-modal="false">
-        <el-form :model="supportFormData" :rules="rules" ref="supportFormRef">
+        <el-form :model="formData" :rules="rules" ref="formRef">
             <el-form-item label="助力描述" prop="description">
-                <el-input v-model="supportFormData.description" type="textarea" :rows="4" placeholder="请输入助力描述" />
+                <el-input v-model="formData.description" type="textarea" :rows="4" placeholder="请输入助力描述" />
             </el-form-item>
 
             <el-form-item label="上传图片">
-                <el-upload v-model:file-list="supportFormData.images" list-type="picture-card"
-                    :on-preview="handleImagePreview" :before-upload="beforeImageUpload" accept="image/*"
-                    :auto-upload="false" multiple>
+                <el-upload v-model:file-list="formData.images" list-type="picture-card" :on-preview="handleImagePreview"
+                    :before-upload="beforeImageUpload" accept="image/*" :auto-upload="false" multiple>
                     <el-icon>
                         <Plus />
                     </el-icon>
@@ -17,8 +16,8 @@
             </el-form-item>
 
             <el-form-item label="上传视频">
-                <el-upload v-model:file-list="supportFormData.videos" :before-upload="beforeVideoUpload"
-                    accept="video/*" :auto-upload="false" multiple>
+                <el-upload v-model:file-list="formData.videos" :before-upload="beforeVideoUpload" accept="video/*"
+                    :auto-upload="false" multiple>
                     <el-button type="primary">选择视频</el-button>
                 </el-upload>
             </el-form-item>
@@ -38,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, defineProps, computed, defineEmits } from 'vue'
+import { ref, reactive, defineProps, computed, defineEmits, onMounted } from 'vue'
 import { uploadFiles } from "@/utils/upload";
 import { Plus } from "@element-plus/icons-vue";
 import { getToken } from '@/utils/auth';
@@ -70,8 +69,8 @@ const dialogVisible = computed({
     }
 })
 
-const supportFormRef = ref();
-const supportFormData = reactive({
+const formRef = ref();
+const formData = reactive({
     description: "",
     images: [],
     videos: [],
@@ -89,37 +88,69 @@ const rules = {
 
 // 处理助力提交
 const submitSupport = async () => {
-    if (!supportFormRef.value) return;
+    if (!formRef.value) return;
     const token = getToken();
 
     try {
-        await supportFormRef.value.validate();
+        await formRef.value.validate();
+    } catch (error) {
+        return
+    }
 
-        const imageUrls = await uploadFiles(supportFormData.images, token)
-        const videoUrls = await uploadFiles(supportFormData.videos, token)
+    try {
+        const imageUrls = await uploadFiles(formData.images, token)
+        const videoUrls = await uploadFiles(formData.videos, token)
 
-        try {
-            const response = await axios.post(
-                "http://10.29.39.146:8088/api/assistance/create",
-                {
-                    token: token,
-                    publicity_id: props.publicity_id,
-                    description: supportFormData.description,
-                    image_url: imageUrls,
-                    video_url: videoUrls,
+        if (props.editData) {
+            try {
+                const response = await axios.post(
+                    "http://10.29.39.146:8088/api/assistance/modify",
+                    {
+                        token: token,
+                        assistance_id: props.editData.assistance_id,
+                        description: formData.description,
+                        image_url: imageUrls,
+                        video_url: videoUrls,
+                    }
+                );
+                if (response.data.status === "success") {
+                    ElMessage.success("修改成功");
+                    console.log(response.data);
+                    dialogVisible.value = false;
+                    emits("success")
+                } else {
+                    ElMessage.error(response.data.message);
+                    console.error(response.data);
                 }
-            );
-            if (response.data.status === "success") {
-                ElMessage.success("发布成功");
-                console.log(response.data);
-                dialogVisible.value = false;
-            } else {
-                ElMessage.error(response.data.message);
-                console.error(response.data);
+            } catch (error) {
+                ElMessage.error("修改失败，请稍后再试");
+                console.error(error);
             }
-        } catch (error) {
-            ElMessage.error("发布失败，请稍后再试");
-            console.error(error);
+        }
+        else {
+            try {
+                const response = await axios.post(
+                    "http://10.29.39.146:8088/api/assistance/create",
+                    {
+                        token: token,
+                        publicity_id: props.publicity_id,
+                        description: formData.description,
+                        image_url: imageUrls,
+                        video_url: videoUrls,
+                    }
+                );
+                if (response.data.status === "success") {
+                    ElMessage.success("发布成功");
+                    console.log(response.data);
+                    dialogVisible.value = false;
+                } else {
+                    ElMessage.error(response.data.message);
+                    console.error(response.data);
+                }
+            } catch (error) {
+                ElMessage.error("发布失败，请稍后再试");
+                console.error(error);
+            }
         }
     } catch (error) {
         ElMessage.error("请求失败，请稍后再试");
@@ -153,6 +184,24 @@ const handleImagePreview = (uploadFile) => {
     dialogImageUrl.value = uploadFile.url;
     previewVisible.value = true;
 };
+
+onMounted(() => {
+    if (props.editData) {
+        formData.description = props.editData.description
+        for (const url of props.editData.image_url) {
+            formData.images.push({
+                name: '',
+                url: url
+            })
+        }
+        for (const url of props.editData.video_url) {
+            formData.videos.push({
+                name: '',
+                url: url
+            })
+        }
+    }
+})
 </script>
 
 <style lang="scss" scoped>
