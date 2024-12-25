@@ -133,9 +133,9 @@
         <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
         <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
         <ShowAssistance v-if="activeMenu === 'myAssistance'" />
-        <showUser v-if="activeMenu === 'queryUsers'" :type="'myAssistance'"/>
+        <showUser v-if="activeMenu === 'queryUsers'" :type="'myAssistance'" />
         <ShowPublicity v-if="activeMenu === 'queryPublicity'" :type="'adminQuery'" />
-        <ShowAssistance v-if="activeMenu === 'queryAssistance'" :type="'allAssistance'"/>
+        <ShowAssistance v-if="activeMenu === 'queryAssistance'" :type="'allAssistance'" />
         <ShowStatistics v-if="activeMenu === 'statistics'" />
       </div>
 
@@ -150,6 +150,18 @@
   <el-dialog v-model="updateVisible" title="修改个人信息" width="480px" :close-on-click-modal="false"
     custom-class="profile-dialog">
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="90px" class="profile-form">
+      <div class="avatar-container">
+        <el-upload class="avatar-uploader" v-model:file-list="formData.avatarFile" list-type="picture-card"
+          :before-upload="beforeAvatarUpload" :auto-upload="false" single>
+          <el-avatar v-if="formData.userAvatar" :size="50" :src="formData.userAvatar" class="avatar" />
+          <el-avatar v-else :size="50" class="avatar">
+            <el-icon>
+              <UserFilled />
+            </el-icon>
+          </el-avatar>
+          <div class="avatar-hover-text">点击更换头像</div>
+        </el-upload>
+      </div>
       <el-form-item label="用户名">
         <el-input v-model="formData.username" disabled class="disabled-input" />
       </el-form-item>
@@ -198,6 +210,7 @@ import ShowAssistance from '@/components/ShowAssistance.vue'
 import ShowUser from '@/components/ShowUser.vue'
 import PopularityBoard from '@/components/PopularityBoard.vue'
 import ShowStatistics from '@/components/ShowStatistics.vue'
+import { uploadFiles } from '@/utils/upload'
 
 // 状态管理
 const isLoggedIn = ref(false)
@@ -216,6 +229,7 @@ const formData = reactive({
   phone: '',          // 手机号
   bio: '',            // 个人简介
   password: '',        // 密码
+  avatarFile: [],      // 头像文件
 })
 
 const formRef = ref(null)
@@ -223,6 +237,10 @@ const formRef = ref(null)
 const isAdmin = ref(false)
 
 const validatePassword = (rule, value, callback) => {
+  if (value === '') {
+    callback()
+  }
+
   if (value.length < 6) {
     callback(new Error('密码长度不能少于6位'))
     return
@@ -292,11 +310,22 @@ const getUserInfo = async () => {
 // 更新用户信息方法
 const updateInfo = async () => {
   try {
-    const response = await axios.put('http://10.29.39.146:8088/api/users/update', {
+    console.log(1)
+    const avatarUrl = await uploadFiles(formData.avatarFile, token)
+    const updateData = {
       token: token,
       phone: formData.phone,
       bio: formData.bio,
-      password: formData.password
+    }
+    if (formData.password) {
+      updateData.password = formData.password
+    }
+    if (avatarUrl.length > 0) {
+      updateData.avatarUrl = avatarUrl[0]
+    }
+
+    const response = await axios.put('http://10.29.39.146:8088/api/users/update', {
+      ...updateData
     })
     if (response.data.status === 'success') {
       ElMessage.success(response.data.message)
@@ -352,6 +381,21 @@ const handleUpdateProfile = async () => {
   } catch (error) {
     console.error('表单验证失败:', error)
   }
+}
+
+const beforeAvatarUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('请上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+  return true
 }
 </script>
 
@@ -533,6 +577,57 @@ $hot-color: #ff6b6b;
           box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
         }
       }
+    }
+  }
+}
+
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  position: relative;
+
+  .avatar-uploader {
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+
+    .avatar {
+      display: block;
+      width: 80px;
+      height: 80px;
+      margin: 0 auto;
+      transition: all 0.3s;
+
+      :deep(.el-icon) {
+        font-size: 60px;
+        line-height: 80px;
+      }
+    }
+
+    &:hover {
+      .avatar {
+        opacity: 0.8;
+      }
+
+      .avatar-hover-text {
+        opacity: 1;
+      }
+    }
+
+    .avatar-hover-text {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      font-size: 12px;
+      color: #909399;
+      opacity: 0;
+      transition: all 0.3s;
+      text-align: center;
+      white-space: nowrap;
     }
   }
 }
