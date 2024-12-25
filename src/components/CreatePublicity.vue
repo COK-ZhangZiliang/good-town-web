@@ -1,26 +1,26 @@
 <!-- 发布宣传对话框 -->
 <template>
-    <el-dialog v-model="dialogVisible" title="发布宣传信息" width="600px" :close-on-click-modal="false"
-        custom-class="promotion-dialog">
+    <el-dialog v-model="dialogVisible" :title="!!props.editData ? '修改宣传信息' : '发布宣传信息'" width="600px"
+        :close-on-click-modal="false" custom-class="promotion-dialog">
         <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px" class="promotion-form">
             <el-form-item label="省份" prop="province">
-                <el-select v-model="formData.province" @change="handleProvinceChange">
+                <el-select v-model="formData.province" @change="handleProvinceChange" :disabled="!!props.editData">
                     <el-option v-for="item in provinces" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>
 
             <el-form-item label="城市" prop="city">
-                <el-select v-model="formData.city">
+                <el-select v-model="formData.city" :disabled="!!props.editData">
                     <el-option v-for="item in cities" :key="item" :label="item" :value="item" />
                 </el-select>
             </el-form-item>
 
             <el-form-item label="乡镇名" prop="town">
-                <el-input v-model="formData.town" placeholder="请输入乡镇名称" />
+                <el-input v-model="formData.town" placeholder="请输入乡镇名称" :disabled="!!props.editData" />
             </el-form-item>
 
             <el-form-item label="宣传类型" prop="type">
-                <el-select v-model="formData.type">
+                <el-select v-model="formData.type" :disabled="!!props.editData">
                     <el-option label="农家院" value="farmhouse" />
                     <el-option label="自然风光" value="nature" />
                     <el-option label="古建筑" value="ancient" />
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, defineProps, defineEmits, computed } from 'vue'
+import { ref, reactive, defineProps, defineEmits, computed, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getToken } from '@/utils/auth'
@@ -113,72 +113,68 @@ const handleProvinceChange = (value) => {
 const handleSubmit = async () => {
     if (!formRef.value) return
     const token = getToken()
-    const imageUrls = []
-    const videoUrls = []
 
     try {
         await formRef.value.validate()
 
-        imageUrls.value = uploadFiles(formData.images, token).value
-        videoUrls.value = uploadFiles(formData.videos, token).value
+        const imageUrls = await uploadFiles(formData.images, token)
+        const videoUrls = await uploadFiles(formData.videos, token)
 
-        console.log(imageUrls)
-
-        for (let i = 0; i < formData.videos.length; i++) {
-            const file = formData.videos[i]
-            const data = new FormData()
-            data.append('file', file.raw)
-            data.append('token', token)
+        if (props.editData) {
             try {
-                const response = await axios.post('http://10.29.39.146:8088/api/files/upload', data)
+                const response = await axios.put(`http://10.29.39.146:8088/api/publicity/update/${props.editData.publicity_id}`, {
+                    title: formData.title,
+                    description: formData.description,
+                    image_url: imageUrls,
+                    video_url: videoUrls
+                },
+                    {
+                        headers: {
+                            token: token
+                        }
+                    }
+                )
                 if (response.data.status === 'success') {
-                    videoUrls.push(response.data.file_url)
+                    ElMessage.success('修改成功')
                     console.log(response.data)
+                    dialogVisible.value = false
                 }
                 else {
                     ElMessage.error(response.data.message)
                     console.error(response.data)
-                    return
                 }
             } catch (error) {
-                ElMessage.error('视频上传失败，请稍后再试')
+                ElMessage.error('修改失败，请稍后再试')
                 console.error(error)
-                return
             }
         }
-
-        try {
-            const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
-                token: token,
-                province: formData.province,
-                city: formData.city,
-                townName: formData.town,
-                type: formData.type,
-                title: formData.title,
-                description: formData.description,
-                image_url: imageUrls,
-                video_url: videoUrls
-            })
-            if (response.data.status === 'success') {
-                formData.province = '' // 清空数据
-                formData.city = ''
-                formData.town = ''
-                formData.type = ''
-                formData.title = ''
-                formData.description = ''
-                formData.images = []
-                formData.videos = []
-                ElMessage.success('发布成功')
-                console.log(response.data)
-                dialogVisible.value = false
+        else {
+            try {
+                console.log(imageUrls)
+                const response = await axios.post('http://10.29.39.146:8088/api/publicity/create', {
+                    token: token,
+                    province: formData.province,
+                    city: formData.city,
+                    townName: formData.town,
+                    type: formData.type,
+                    title: formData.title,
+                    description: formData.description,
+                    image_url: imageUrls,
+                    video_url: videoUrls
+                })
+                if (response.data.status === 'success') {
+                    ElMessage.success('发布成功')
+                    console.log(response.data)
+                    dialogVisible.value = false
+                }
+                else {
+                    ElMessage.error(response.data.message)
+                    console.error(response.data)
+                }
+            } catch (error) {
+                ElMessage.error('发布失败，请稍后再试')
+                console.error(error)
             }
-            else {
-                ElMessage.error(response.data.message)
-                console.error(response.data)
-            }
-        } catch (error) {
-            ElMessage.error('发布失败，请稍后再试')
-            console.error(error)
         }
 
     } catch (error) {
@@ -190,14 +186,6 @@ const handleSubmit = async () => {
 // 取消提交
 const cancelSubmit = () => {
     dialogVisible.value = false
-    formData.province = '' // 清空数据
-    formData.city = ''
-    formData.town = ''
-    formData.type = ''
-    formData.title = ''
-    formData.description = ''
-    formData.images = []
-    formData.videos = []
 }
 
 // 检测上传图片大小
@@ -227,6 +215,10 @@ const props = defineProps({
     visible: {
         type: Boolean,
         default: false
+    },
+    editData: {
+        type: Object,
+        required: false
     }
 })
 
@@ -236,6 +228,29 @@ const dialogVisible = computed({
     get: () => props.visible,
     set: (value) => {
         emit('update:visible', value)
+    }
+})
+
+onMounted(() => {
+    if (props.editData) {
+        formData.province = props.editData.province
+        formData.city = props.editData.city
+        formData.town = props.editData.town_name
+        formData.type = props.editData.type
+        formData.title = props.editData.title
+        formData.description = props.editData.description
+        for (const url of props.editData.image_url) {
+            formData.images.push({
+                name: '',
+                url: url
+            })
+        }
+        for (const url of props.editData.video_url) {
+            formData.videos.push({
+                name: '',
+                url: url
+            })
+        }
     }
 })
 </script>
