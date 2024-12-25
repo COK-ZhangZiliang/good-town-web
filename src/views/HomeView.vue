@@ -50,7 +50,7 @@
     <div class="main-content">
       <!-- 左侧导航栏 -->
       <div class="left-sidebar">
-        <el-menu :default-active="activeMenu" class="nav-menu" :default-openeds="['assist', 'promote']"
+        <el-menu :default-active="activeMenu" class="nav-menu" :default-openeds="['assist', 'promote', 'admin']"
           @select="handleMenuSelect">
           <el-sub-menu index="assist">
             <template #title>
@@ -92,6 +92,39 @@
               <span>发布宣传</span>
             </el-menu-item>
           </el-sub-menu>
+
+          <el-sub-menu index="admin" v-if="isAdmin">
+            <template #title>
+              <el-icon>
+                <Setting />
+              </el-icon>
+              <span>管理员</span>
+            </template>
+            <el-menu-item index="queryUsers">
+              <el-icon>
+                <User />
+              </el-icon>
+              <span>查询用户</span>
+            </el-menu-item>
+            <el-menu-item index="queryPublicity">
+              <el-icon>
+                <Document />
+              </el-icon>
+              <span>查询宣传</span>
+            </el-menu-item>
+            <el-menu-item index="queryAssistance">
+              <el-icon>
+                <Star />
+              </el-icon>
+              <span>查询助力</span>
+            </el-menu-item>
+            <el-menu-item index="statistics">
+              <el-icon>
+                <Histogram />
+              </el-icon>
+              <span>查询统计</span>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </div>
 
@@ -108,25 +141,12 @@
         <ShowPublicity v-if="activeMenu === 'createAssistance'" :username="formData.username" :type="'allPromotions'" />
         <ShowPublicity v-if="activeMenu === 'myPromotions'" :type="'myPromotions'" />
         <ShowAssistance v-if="activeMenu === 'myAssistance'" />
+        <showUser v-if="activeMenu === 'queryUsers'" />
       </div>
 
       <!-- 右侧热度榜 -->
       <div class="right-sidebar">
-        <div class="hot-list">
-          <h3 class="hot-title">
-            <el-icon>
-              <Histogram />
-            </el-icon>
-            热度榜
-          </h3>
-          <ul class="hot-items">
-            <li v-for="(item, index) in hotList" :key="index" class="hot-item">
-              <span class="rank" :class="{ 'top-three': index < 3 }">{{ index + 1 }}</span>
-              <span class="title">{{ item.title }}</span>
-              <span class="hot-value">{{ item.hot }}</span>
-            </li>
-          </ul>
-        </div>
+        <PopularityBoard />
       </div>
     </div>
   </div>
@@ -173,13 +193,15 @@
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { UserFilled, Star, Promotion, Histogram, Plus, Document } from '@element-plus/icons-vue'
+import { UserFilled, Star, Promotion, Plus, Document, Setting, User } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'
 import { removeToken } from '@/utils/auth'
 import axios from 'axios'
 import CreatePublicity from '@/components/CreatePublicity.vue'
 import ShowPublicity from '@/components/ShowPublicity.vue'
 import ShowAssistance from '@/components/ShowAssistance.vue'
+import ShowUser from '@/components/ShowUser.vue'
+import PopularityBoard from '@/components/PopularityBoard.vue'
 
 // 状态管理
 const isLoggedIn = ref(false)
@@ -202,6 +224,8 @@ const formData = reactive({
 })
 
 const formRef = ref(null)
+
+const isAdmin = ref(false)
 
 const validatePassword = (rule, value, callback) => {
   if (value.length < 6) {
@@ -242,6 +266,7 @@ const getUserInfo = async () => {
       formData.userAvatar = response.data.data.avatarUrl
       formData.username = response.data.data.username
       formData.name = response.data.data.name
+      isAdmin.value = response.data.data.userType === 1
       switch (response.data.data.idType) {
         case "ID_CARD":
           formData.idType = '身份证'
@@ -300,15 +325,6 @@ onMounted(() => {
     getUserInfo()
   }
 })
-
-// 模拟热度榜数据
-const hotList = ref([
-  { title: '热门话题1', hot: '999+' },
-  { title: '热门话题2', hot: '888+' },
-  { title: '热门话题3', hot: '777+' },
-  { title: '热门话题4', hot: '666+' },
-  { title: '热门话题5', hot: '555+' },
-])
 
 // 处理搜索
 const handleSearch = () => {
@@ -472,86 +488,6 @@ $hot-color: #ff6b6b;
   background-color: white;
   border-left: 1px solid $border-color;
   padding: 20px;
-
-  .hot-title {
-    @include flex-center;
-    gap: 8px;
-    margin-bottom: 16px;
-    color: $text-primary;
-  }
-
-  .hot-items {
-    list-style: none;
-    padding: 0;
-  }
-
-  .hot-item {
-    @include flex-center;
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
-
-    .rank {
-      width: 24px;
-      height: 24px;
-      @include flex-center;
-      justify-content: center;
-      margin-right: 12px;
-      border-radius: 4px;
-      background-color: #f0f0f0;
-      color: $text-light;
-
-      &.top-three {
-        background-color: $primary-color;
-        color: white;
-      }
-    }
-
-    .title {
-      flex: 1;
-      margin-right: 12px;
-      color: $text-primary;
-    }
-
-    .hot-value {
-      color: $hot-color;
-      font-size: 14px;
-    }
-  }
-
-  .user-info {
-    display: flex;
-    align-items: center;
-
-    .avatar-trigger {
-      cursor: pointer;
-    }
-
-    .username {
-      color: $text-primary;
-      margin-left: 8px;
-    }
-  }
-
-  .avatar-uploader {
-    :deep(.el-upload) {
-      border: 1px dashed #d9d9d9;
-      border-radius: 6px;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: var(--el-transition-duration);
-
-      &:hover {
-        border-color: var(--el-color-primary);
-      }
-    }
-  }
-
-  .avatar {
-    width: 100px;
-    height: 100px;
-    display: block;
-  }
 }
 
 .profile-dialog {
