@@ -51,13 +51,13 @@ public class AssistanceController {
             Integer action = (Integer) requestPayload.get("action"); // 1: 接受, 2: 拒绝
 
             if (assistanceId == null || action == null || !(action == 1 || action == 2)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Invalid parameters"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "参数无效"));
             }
 
             // 查询助力请求
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未找到这个助力请求"));
             }
 
             // 如果是接受操作，检查是否已存在成功记录，避免重复同意
@@ -65,14 +65,14 @@ public class AssistanceController {
                 boolean alreadyAccepted = assistanceSuccessService
                         .existsByAssistanceIdAndAssistanceUserId(assistanceId, assistance.getUserId());
                 if (alreadyAccepted) {
-                    return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already accepted"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "助力请求已被接受"));
                 }
             }
 
             // 验证是否是该用户发布的宣传信息
             Publicity publicity = publicityService.getPublicityById(assistance.getPublicityId());
             if (publicity == null || !publicity.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Unauthorized action"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未经授权的行为"));
             }
 
             // 更新助力状态
@@ -90,7 +90,7 @@ public class AssistanceController {
                 assistanceSuccessService.saveAssistanceSuccess(successRecord);
             }
 
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Assistance request updated successfully"));
+            return ResponseEntity.ok(Map.of("status", "success", "message", "助力请求更新成功"));
 
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
@@ -117,7 +117,7 @@ public class AssistanceController {
             List<Map<String, Object>> responseData = new ArrayList<>();
             for (Assistance assistance : assistanceList) {
                 if (assistance.getStatus() == 2 || assistance.getStatus() == 3)
-                    continue; // 跳过已拒绝和已删除
+                    continue; // 跳过已拒绝和已取消
 
                 Map<String, Object> assistanceData = new HashMap<>();
                 assistanceData.put("assistance_id", assistance.getAssistanceId());
@@ -201,18 +201,18 @@ public class AssistanceController {
 
             // 校验必填参数
             if (publicityId == null || description == null || description.trim().isEmpty()) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Missing required parameters"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "缺少必要参数"));
             }
 
             // 检查宣传信息是否存在
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未找到宣传信息"));
             }
 
             // 检查是否尝试助力自己的宣传信息
             if (publicity.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot assist your own publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "无法为自己助力"));
             }
 
             // 检查是否已经存在相同的助力请求
@@ -221,7 +221,7 @@ public class AssistanceController {
                 Assistance assistance = existingAssistance.get();
                 // 如果状态不是拒绝状态或删除状态（status=2表示拒绝）
                 if (assistance.getStatus() != 2 && assistance.getStatus() != 3) {
-                    return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already exists"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "已存在待处理或被同意的助力请求"));
                 }
             }
 
@@ -267,7 +267,7 @@ public class AssistanceController {
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
-                    "message", "Assistance request created successfully",
+                    "message", "助力请求创建成功",
                     "data", responseData
             ));
 
@@ -302,18 +302,18 @@ public class AssistanceController {
             Integer status = (Integer) requestPayload.getOrDefault("status", null);
 
             if (assistanceId == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Missing assistance_id"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "缺少 assistance_id"));
             }
 
             // 查找助力信息
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null || !assistance.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未经授权的行为"));
             }
 
             // 检查助力状态，只有未被同意的（状态为 0 或 2 或 3）才能修改
             if (assistance.getStatus() != 0 && assistance.getStatus() != 3 && assistance.getStatus() != 2) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot modify accepted assistance"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "无法修改已被接受的助力请求"));
             }
 
             // 更新字段
@@ -353,7 +353,7 @@ public class AssistanceController {
 
             return ResponseEntity.ok(Map.of(
                     "status", "success",
-                    "message", "Assistance modified successfully",
+                    "message", "助力信息修改成功",
                     "data", responseData
             ));
 
@@ -383,18 +383,18 @@ public class AssistanceController {
             // 查找助力信息
             Assistance assistance = assistanceService.getAssistanceById(assistanceId);
             if (assistance == null || !assistance.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance not found or unauthorized"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未经授权的行为"));
             }
 
             // 检查助力状态，只有未被接受的（状态为 0 或 2 或 3 ）才能删除
             if (assistance.getStatus() != 0 && assistance.getStatus() != 2 && assistance.getStatus() != 3) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot delete accepted assistance"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "无法删除已被接受的助力请求"));
             }
 
             // 删除助力记录
             assistanceService.deleteAssistanceById(assistanceId);
 
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Assistance deleted successfully"));
+            return ResponseEntity.ok(Map.of("status", "success", "message", "助力信息删除成功"));
 
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));

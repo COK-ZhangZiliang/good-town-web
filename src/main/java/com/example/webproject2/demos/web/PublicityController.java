@@ -125,8 +125,8 @@ public class PublicityController {
                     // 构造助力请求数据
                     List<Map<String, Object>> assistanceDataList = new ArrayList<>();
                     for (Assistance assistance : assistanceRequests) {
-                        if (assistance.getStatus() == 2)
-                            continue; // 不返回已拒绝的助力请求
+                        if (assistance.getStatus() == 2 || assistance.getStatus() == 3) // 只返回已接受或待处理的
+                            continue;
 
                         Map<String, Object> assistanceData = new HashMap<>();
                         assistanceData.put("assistance_id", assistance.getAssistanceId());
@@ -175,6 +175,10 @@ public class PublicityController {
         }
     }
 
+
+
+
+    // 创建宣传信息
     @PostMapping("/create")
     public ResponseEntity<?> addPublicity(@RequestHeader(value = "token", required = false) String headerToken,
                                           @RequestBody Map<String, Object> requestData) {
@@ -214,7 +218,7 @@ public class PublicityController {
             // 检查是否已存在对应的宣传信息
             boolean publicityExists = publicityService.existsByUserIdAndTownId(userId, townId);
             if (publicityExists) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity already exists for this town and user."));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "该城镇和用户的宣传已经存在"));
             }
 
             // 创建宣传信息
@@ -263,7 +267,7 @@ public class PublicityController {
             publicityData.put("created_at", publicity.getCreatedAt());
             publicityData.put("updated_at", publicity.getUpdatedAt());
 
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity added successfully!", "data", publicityData));
+            return ResponseEntity.ok(Map.of("status", "success", "message", "成功创建宣传信息", "data", publicityData));
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
@@ -418,12 +422,12 @@ public class PublicityController {
             // 获取要修改的宣传信息
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未找到宣传信息"));
             }
 
             // 确保用户只能修改自己发布的宣传信息
             if (!publicity.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "You do not have permission to edit this publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "您无权编辑此宣传内容"));
             }
 
             Integer status = (Integer) requestData.get("status");
@@ -431,8 +435,8 @@ public class PublicityController {
             // 需要验证是否有待处理的助力请求
             List<Assistance> assistanceRequests = assistanceService.getAssistanceByPublicityId(publicityId);
             for (Assistance assistance : assistanceRequests) {
-                if (assistance.getStatus() == 0) { // 如果存在待接受的助力请求
-                    return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot publish publicity with active assistance requests"));
+                if (assistance.getStatus() == 0 || assistance.getStatus() == 1) { // 如果存在待接受的助力请求或已接受的助力请求
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "无法修改已有助力响应的宣传信息"));
                 }
             }
 
@@ -487,7 +491,7 @@ public class PublicityController {
             publicityData.put("created_at", publicity.getCreatedAt());
             publicityData.put("updated_at", publicity.getUpdatedAt());
 
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity updated successfully!", "data", publicityData));
+            return ResponseEntity.ok(Map.of("status", "success", "message", "宣传信息更新成功", "data", publicityData));
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
@@ -512,26 +516,26 @@ public class PublicityController {
             // 查询宣传信息
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未找到宣传信息"));
             }
 
             // 验证该宣传信息是否属于当前用户
             if (!publicity.getUserId().equals(userId)) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "You do not have permission to delete this publicity"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "您无权删除此宣传信息"));
             }
 
             // 检查该宣传信息是否有待处理的助力请求
             List<Assistance> assistanceList = assistanceService.getAssistanceByPublicityId(publicityId);
             for (Assistance assistance : assistanceList) {
                 if (assistance.getStatus() == 0 || assistance.getStatus() == 1) {
-                    return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot delete publicity with active assistance requests"));
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "无法删除已有助力响应的宣传内容"));
                 }
             }
 
             // 删除宣传信息
             publicityRepository.delete(publicity);
 
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Publicity deleted successfully"));
+            return ResponseEntity.ok(Map.of("status", "success", "message", "宣传信息删除成功"));
         } catch (Exception e) {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
@@ -668,7 +672,7 @@ public class PublicityController {
         try {
             Publicity publicity = publicityService.getPublicityById(publicityId);
             if (publicity == null) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Publicity not found"));
+                return ResponseEntity.ok(Map.of("status", "error", "message", "未找到宣传信息"));
             }
 
             Map<String, Object> publicityData = new HashMap<>();
