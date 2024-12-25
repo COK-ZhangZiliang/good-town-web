@@ -75,57 +75,24 @@
   </div>
 
   <!-- 助力信息详情对话框 -->
-  <AssistanceInfo v-model:dialog-visible="AssistanceInfoVisible" :assistance="selectedAssistance" />
+  <AssistanceInfo v-model:dialog-visible="assistanceInfoVisible" :assistance="selectedAssistance" />
 
-  <!-- 填写助力信息对话框 -->
-  <el-dialog v-if="supportVisible" v-model="supportVisible" title="添加助力信息" width="600px" :close-on-click-modal="false">
-    <el-form :model="supportFormData" :rules="rules" ref="supportFormRef">
-      <el-form-item label="助力描述" prop="description">
-        <el-input v-model="supportFormData.description" type="textarea" :rows="4" placeholder="请输入助力描述" />
-      </el-form-item>
+  <!-- 创建助力 -->
+  <CreateAssistance v-if="supportVisible" v-model:visible="supportVisible" :publicity_id="content.publicity_id" />
 
-      <el-form-item label="上传图片">
-        <el-upload v-model:file-list="supportFormData.images" list-type="picture-card" :on-preview="handleImagePreview"
-          :before-upload="beforeImageUpload" accept="image/*" :auto-upload="false" multiple>
-          <el-icon>
-            <Plus />
-          </el-icon>
-        </el-upload>
-      </el-form-item>
-
-      <el-form-item label="上传视频">
-        <el-upload v-model:file-list="supportFormData.videos" :before-upload="beforeVideoUpload" accept="video/*"
-          :auto-upload="false" multiple>
-          <el-button type="primary">选择视频</el-button>
-        </el-upload>
-      </el-form-item>
-    </el-form>
-
-    <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="cancelSupport">取消</el-button>
-        <el-button type="primary" @click="submitSupport">确定</el-button>
-      </span>
-    </template>
-  </el-dialog>
-
-  <el-dialog v-model="previewVisible">
-    <img w-full :src="dialogImageUrl" alt="Preview Image" />
-  </el-dialog>
-
-  <!-- 修改对话框 -->
+  <!-- 修改宣传信息 -->
   <CreatePublicity v-if="editVisible" v-model:visible="editVisible" :editData="content" @success="handleEditSuccess" />
 </template>
 
 <script setup>
-import { computed, defineProps, ref, reactive, defineEmits } from "vue";
-import { Star, Edit, Delete, UserFilled, Plus } from "@element-plus/icons-vue";
+import { computed, defineProps, ref, defineEmits } from "vue";
+import { Star, Edit, Delete, UserFilled } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import AssistanceInfo from "@/components/AssistanceInfo.vue";
 import { getToken } from "@/utils/auth";
-import { uploadFiles } from "@/utils/upload";
 import axios from "axios";
 import CreatePublicity from "@/components/CreatePublicity.vue";
+import CreateAssistance from "@/components/CreateAssistance.vue";
 
 // 接收数据
 const props = defineProps({
@@ -154,17 +121,14 @@ const videoUrls = computed(() => content.value.video_url || []);
 const user = computed(() => content.value.user || {});
 const assist = computed(() => content.value.assistance_requests || {});
 
-const AssistanceInfoVisible = ref(false);
+const assistanceInfoVisible = ref(false);
 const selectedAssistance = ref(null);
-
-const dialogImageUrl = ref("");
-const previewVisible = ref(false);
 
 const editVisible = ref(false);
 
 // 展示详细助力信息
 const showAssistDetail = (ass) => {
-  AssistanceInfoVisible.value = true;
+  assistanceInfoVisible.value = true;
   selectedAssistance.value = ass;
 };
 
@@ -183,19 +147,6 @@ const convertedType = computed(() => {
 });
 
 const supportVisible = ref(false);
-const supportFormRef = ref();
-const supportFormData = reactive({
-  description: "",
-  images: [],
-  videos: [],
-});
-
-const rules = {
-  description: [
-    { required: true, message: "请输入助力描述", trigger: "blur" },
-    { min: 1, max: 500, message: "长度在 1 到 500 个字符", trigger: "blur" },
-  ],
-};
 
 const handleSupport = () => {
   if (user.value.username === props.username) {
@@ -203,75 +154,6 @@ const handleSupport = () => {
     return;
   }
   supportVisible.value = true;
-};
-
-// 处理助力提交
-const submitSupport = async () => {
-  if (!supportFormRef.value) return;
-  const token = getToken();
-  const imageUrls = [];
-  const videoUrls = [];
-
-  try {
-    await supportFormRef.value.validate();
-
-    imageUrls.value = uploadFiles(supportFormData.images, token).value;
-    videoUrls.value = uploadFiles(supportFormData.videos, token).value;
-
-    try {
-      const response = await axios.post(
-        "http://10.29.39.146:8088/api/assistance/create",
-        {
-          token: token,
-          publicity_id: content.value.publicity_id,
-          description: supportFormData.description,
-          image_url: imageUrls,
-          video_url: videoUrls,
-        }
-      );
-      if (response.data.status === "success") {
-        ElMessage.success("发布成功");
-        console.log(response.data);
-        supportVisible.value = false;
-      } else {
-        ElMessage.error(response.data.message);
-        console.error(response.data);
-      }
-    } catch (error) {
-      ElMessage.error("发布失败，请稍后再试");
-      console.error(error);
-    }
-  } catch (error) {
-    ElMessage.error("请求失败，请稍后再试");
-    console.error(error);
-  }
-};
-
-// 取消提交
-const cancelSupport = () => {
-  supportVisible.value = false;
-};
-
-// 检测上传图片大小
-const beforeImageUpload = (file) => {
-  const isLt5M = file.size / 1024 / 1024 < 5;
-  if (!isLt5M) {
-    ElMessage.error("上传图片大小不能超过 5MB!");
-  }
-};
-
-// 检测上传视频大小
-const beforeVideoUpload = (file) => {
-  const isLt100M = file.size / 1024 / 1024 < 100;
-  if (!isLt100M) {
-    ElMessage.error("上传视频大小不能超过 100MB!");
-  }
-};
-
-// 图片预览
-const handleImagePreview = (uploadFile) => {
-  dialogImageUrl.value = uploadFile.url;
-  previewVisible.value = true;
 };
 
 const handleEdit = () => {
@@ -417,17 +299,6 @@ const handleDelete = async () => {
     &:hover {
       text-decoration: underline;
     }
-  }
-}
-
-$input-width: 400px;
-
-.el-form {
-  padding: 20px;
-
-  :deep(.el-textarea__inner) {
-    padding: 20px;
-    width: $input-width;
   }
 }
 </style>
