@@ -116,6 +116,9 @@ public class AssistanceController {
 
             List<Map<String, Object>> responseData = new ArrayList<>();
             for (Assistance assistance : assistanceList) {
+                if (assistance.getStatus() == 2 || assistance.getStatus() == 3)
+                    continue; // 跳过已拒绝和已删除
+
                 Map<String, Object> assistanceData = new HashMap<>();
                 assistanceData.put("assistance_id", assistance.getAssistanceId());
                 assistanceData.put("publicity_id", assistance.getPublicityId());
@@ -216,8 +219,8 @@ public class AssistanceController {
             Optional<Assistance> existingAssistance = assistanceService.findByPublicityIdAndUserId(publicityId, userId);
             if (existingAssistance.isPresent()) {
                 Assistance assistance = existingAssistance.get();
-                // 如果状态不是拒绝状态（假设status=2表示拒绝）
-                if (assistance.getStatus() != 2) {
+                // 如果状态不是拒绝状态或删除状态（status=2表示拒绝）
+                if (assistance.getStatus() != 2 && assistance.getStatus() != 3) {
                     return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already exists"));
                 }
             }

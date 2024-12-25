@@ -523,7 +523,7 @@ public class PublicityController {
             // 检查该宣传信息是否有待处理的助力请求
             List<Assistance> assistanceList = assistanceService.getAssistanceByPublicityId(publicityId);
             for (Assistance assistance : assistanceList) {
-                if (assistance.getStatus() == 0 || assistance.getStatus() == 1 || assistance.getStatus() == 2) {
+                if (assistance.getStatus() == 0 || assistance.getStatus() == 1) {
                     return ResponseEntity.ok(Map.of("status", "error", "message", "Cannot delete publicity with active assistance requests"));
                 }
             }

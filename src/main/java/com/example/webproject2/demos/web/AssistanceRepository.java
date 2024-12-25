@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface AssistanceRepository extends JpaRepository<Assistance, Integer> {
     List<Assistance> findByPublicityId(Integer publicityId);
 
-    List<Assistance> findByUserId(Integer userId);
+    List<Assistance> findByUserIdOrderByUpdatedAt(Integer userId);
 
     Optional<Assistance> findByPublicityIdAndUserId(Integer publicityId, Integer userId);
 
