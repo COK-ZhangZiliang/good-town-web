@@ -186,7 +186,7 @@ const statusClass = computed(() => {
 })
 
 const handleAvatarClick = () => {
-    if (props.type === 'adminQuery') {
+    if (props.type === 'allAssistance') {
         userInfoVisible.value = true;
     }
 };
