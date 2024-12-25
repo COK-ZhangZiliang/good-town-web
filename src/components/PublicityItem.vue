@@ -1,7 +1,7 @@
 <!-- 宣传卡片 -->
 <template>
   <div class="publicity-item">
-    <!-- 头部：用户头像、用户名 -->
+    <!-- 头部：用户头像、用户名、更新时间 -->
     <div class="header">
       <template v-if="user.avatarUrl">
         <el-avatar :size="40" class="avatar">
@@ -25,7 +25,7 @@
       <p class="description">{{ content.description }}</p>
     </div>
 
-    <!-- 图片展示 -->
+    <!-- 图片、视频展示 -->
     <div class="media-container">
       <el-image v-for="(url, index) in imageUrls" :key="index" :src="url" :preview-src-list="imageUrls" fit="cover"
         class="media-item" />
