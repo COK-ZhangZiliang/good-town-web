@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AssistanceRepository extends JpaRepository<Assistance, Integer> {
@@ -11,5 +12,6 @@ public interface AssistanceRepository extends JpaRepository<Assistance, Integer>
 
     List<Assistance> findByUserId(Integer userId);
 
-    boolean existsByPublicityIdAndUserId(Integer publicityId, Integer userId);
+    Optional<Assistance> findByPublicityIdAndUserId(Integer publicityId, Integer userId);
+
 }

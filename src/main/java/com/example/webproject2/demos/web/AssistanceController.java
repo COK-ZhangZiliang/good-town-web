@@ -213,10 +213,15 @@ public class AssistanceController {
             }
 
             // 检查是否已经存在相同的助力请求
-            boolean assistanceExists = assistanceService.existsByPublicityIdAndUserId(publicityId, userId);
-            if (assistanceExists) {
-                return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already exists"));
+            Optional<Assistance> existingAssistance = assistanceService.findByPublicityIdAndUserId(publicityId, userId);
+            if (existingAssistance.isPresent()) {
+                Assistance assistance = existingAssistance.get();
+                // 如果状态不是拒绝状态（假设status=2表示拒绝）
+                if (assistance.getStatus() != 2) {
+                    return ResponseEntity.ok(Map.of("status", "error", "message", "Assistance request already exists"));
+                }
             }
+
 
             // 构建助力对象
             Assistance newAssistance = new Assistance();

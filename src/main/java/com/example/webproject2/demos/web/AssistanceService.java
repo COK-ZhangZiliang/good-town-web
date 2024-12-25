@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AssistanceService {
@@ -35,9 +36,10 @@ public class AssistanceService {
         assistanceRepository.save(newAssistance);
     }
 
-    public boolean existsByPublicityIdAndUserId(Integer publicityId, Integer userId) {
-        return assistanceRepository.existsByPublicityIdAndUserId(publicityId, userId);
+    public Optional<Assistance> findByPublicityIdAndUserId(Integer publicityId, Integer userId) {
+        return assistanceRepository.findByPublicityIdAndUserId(publicityId, userId);
     }
+
 
     public void deleteAssistanceById(Integer assistanceId) {
         assistanceRepository.deleteById(assistanceId);
