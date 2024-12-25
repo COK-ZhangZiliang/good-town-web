@@ -90,6 +90,9 @@ const handleAccept = () => {
             console.error(error);
         }
     })
+        .catch(() => {
+            ElMessage.info('已取消')
+        })
 }
 
 const handleReject = () => {
@@ -121,6 +124,9 @@ const handleReject = () => {
             console.error(error);
         }
     })
+        .catch(() => {
+            ElMessage.info('已取消')
+        })
 }
 </script>
 
@@ -141,22 +147,23 @@ const handleReject = () => {
     }
 
     .media-container {
-    margin: 20px 0;
-    
-    .images, .videos {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
+        margin: 20px 0;
 
-    .media-item {
-        width: 300px;
-        height: 225px;
-        object-fit: cover;
-        border-radius: 4px;
+        .images,
+        .videos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .media-item {
+            width: 300px;
+            height: 225px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
     }
-}
 }
 </style>
