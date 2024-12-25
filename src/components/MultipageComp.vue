@@ -2,8 +2,15 @@
 <template>
     <div class="multipage-container">
         <div class="items-container">
-            <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" :username="props.username"
-                :type="props.type" @refresh="fetchData" />
+            <template v-if="props.type !== 'myAssistance'">
+                <PublicityItem v-for="item in currentPageItems"
+                    :key="`publicity-${item.id}`" :content="item" :username="props.username" :type="props.type"
+                    @refresh="fetchData" />
+            </template>
+            <template v-else>
+                <AssistanceItem v-for="item in currentPageItems" :key="`assistance-${item.id}`" :content="item"
+                    @refresh="fetchData" />
+            </template>
         </div>
         <div class="pagination-wrapper">
             <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage" :background="background"
@@ -14,12 +21,13 @@
 
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue'
-import PublictiyItem from '@/components/PublictiyItem.vue'
+import PublicityItem from '@/components/PublicityItem.vue'
+import AssistanceItem from './AssistanceItem.vue'
 
 // 接收数据
 const props = defineProps(
     {
-        publicityData: {
+        data: {
             type: Array,
             required: true
         },
@@ -36,7 +44,7 @@ const props = defineProps(
 
 const emits = defineEmits(['refresh'])
 
-const items = computed(() => props.publicityData)
+const items = computed(() => props.data)
 
 const currentPage = ref(1)
 const itemsPerPage = 5
