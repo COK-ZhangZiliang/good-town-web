@@ -80,7 +80,10 @@ onMounted(() => {
 const handleSearch = async () => {
     if (props.type === 'myAssistance') {
         try {
-            const response = await axios.post('http://10.29.39.146:8088/api/publicity/search', { keyword: searchQuery.value })
+            const response = await axios.post('http://10.29.39.146:8088/api/assistance/search', {
+                token: getToken(),
+                keyword: searchQuery.value
+            })
             if (response.data.status === 'success') {
                 console.log(response.data)
                 assistanceData.value = response.data.data
@@ -93,9 +96,10 @@ const handleSearch = async () => {
         }
     }
     else if (props.type === 'allAssistance') try {
-        const response = await axios.post('http://10.29.39.146:8088/api/publicity/search/all', {
-            token: getToken(),
+        const response = await axios.post('http://10.29.39.146:8088/api/assistance/search/all', {
             keyword: searchQuery.value
+        }, {
+            headers: { token: getToken() }
         })
         if (response.data.status === 'success') {
             console.log(response.data)
