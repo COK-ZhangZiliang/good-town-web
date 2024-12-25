@@ -125,6 +125,9 @@ public class PublicityController {
                     // 构造助力请求数据
                     List<Map<String, Object>> assistanceDataList = new ArrayList<>();
                     for (Assistance assistance : assistanceRequests) {
+                        if (assistance.getStatus() == 2)
+                            continue; // 不返回已拒绝的助力请求
+
                         Map<String, Object> assistanceData = new HashMap<>();
                         assistanceData.put("assistance_id", assistance.getAssistanceId());
                         assistanceData.put("user_id", assistance.getUserId());
