@@ -1,12 +1,13 @@
 package com.example.webproject2.demos.web;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class TownService {
-
+    @Autowired
     private final TownRepository townRepository;
 
     public TownService(TownRepository townRepository) {
@@ -28,6 +29,11 @@ public class TownService {
             town = townRepository.save(town); // 保存到数据库
         }
         return town.getTownId();
+    }
+
+    public Towns getTownById(Integer townId) {
+        // 根据 townId 查询 Town 信息
+        return townRepository.findById(townId).orElse(null);
     }
 
 }

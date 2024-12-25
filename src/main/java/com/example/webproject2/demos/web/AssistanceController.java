@@ -24,6 +24,9 @@ public class AssistanceController {
     @Autowired
     private AssistanceSuccessService assistanceSuccessService;
 
+    @Autowired
+    private TownService townService;
+
 
     // 接受或拒绝助力请求
     @PostMapping("/update")
@@ -139,6 +142,27 @@ public class AssistanceController {
                 assistanceData.put("status", assistance.getStatus());
                 assistanceData.put("created_at", assistance.getCreatedAt());
                 assistanceData.put("updated_at", assistance.getUpdatedAt());
+
+                // 根据 publicityId 查询对应的 townId
+                Integer publicityId = assistance.getPublicityId();
+                if (publicityId != null) {
+                    Publicity publicity = publicityService.getPublicityById(publicityId);
+                    if (publicity != null) {
+                        Integer townId = publicity.getTownId();
+                        assistanceData.put("town_id", townId);
+
+                        // 根据 townId 查询详细的省市和 townName
+                        if (townId != null) {
+                            Towns town = townService.getTownById(townId); // 正确：通过注入的实例调用
+                            if (town != null) {
+                                assistanceData.put("province", town.getProvince());
+                                assistanceData.put("city", town.getCity());
+                                assistanceData.put("town_name", town.getTownName());
+                            }
+                        }
+                    }
+                }
+
                 responseData.add(assistanceData);
             }
 
