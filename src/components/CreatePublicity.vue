@@ -138,6 +138,7 @@ const handleSubmit = async () => {
                     ElMessage.success('修改成功')
                     console.log(response.data)
                     dialogVisible.value = false
+                    emits("success")
                 }
                 else {
                     ElMessage.error(response.data.message)
@@ -222,12 +223,12 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:visible'], ['update:activeMenu'])
+const emits = defineEmits(['update:visible'], ['success'])
 
 const dialogVisible = computed({
     get: () => props.visible,
     set: (value) => {
-        emit('update:visible', value)
+        emits('update:visible', value)
     }
 })
 

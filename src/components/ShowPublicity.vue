@@ -2,7 +2,8 @@
 <template>
     <div>
         <el-loading v-if="loading" />
-        <MultipageComp :publicity-data="publicityData" :username="props.username" :type="props.type"/>
+        <MultipageComp :publicity-data="publicityData" :username="props.username" :type="props.type"
+            @refresh="getAllPublicity" />
     </div>
 </template>
 
@@ -29,7 +30,6 @@ const loading = ref(true)
 
 // 获取所有宣传信息
 const getAllPublicity = async () => {
-    console.log(props.type)
     if (props.type === "allPromotions") {
         try {
             loading.value = true
@@ -54,7 +54,6 @@ const getAllPublicity = async () => {
             loading.value = true
             const token = getToken()
             const response = await axios.get('http://10.29.39.146:8088/api/publicity/my', { headers: { token: token } })
-            console.log(1)
             if (response.data.status === 'success') {
                 console.log(response.data)
                 publicityData.value = response.data.data

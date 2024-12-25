@@ -1,19 +1,19 @@
 <!-- 分页展示容器 -->
 <template>
     <div class="multipage-container">
-            <div class="items-container">
-                <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" :username="props.username" :type="props.type"/>
-            </div>
-            <div class="pagination-wrapper">
-                <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage"
-                    :background="background" layout="prev, pager, next, jumper" :total="items.length"
-                    @current-change="handleCurrentChange" />
-            </div>
+        <div class="items-container">
+            <PublictiyItem v-for="item in currentPageItems" :key="item.id" :content="item" :username="props.username"
+                :type="props.type" @refresh="fetchData" />
+        </div>
+        <div class="pagination-wrapper">
+            <el-pagination v-model:current-page="currentPage" v-model:page-size="itemsPerPage" :background="background"
+                layout="prev, pager, next, jumper" :total="items.length" @current-change="handleCurrentChange" />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, defineProps } from 'vue'
+import { ref, computed, defineProps, defineEmits } from 'vue'
 import PublictiyItem from '@/components/PublictiyItem.vue'
 
 // 接收数据
@@ -33,6 +33,9 @@ const props = defineProps(
         }
     }
 )
+
+const emits = defineEmits(['refresh'])
+
 const items = computed(() => props.publicityData)
 
 const currentPage = ref(1)
@@ -48,6 +51,10 @@ const currentPageItems = computed(() => {
 // 跳转页面
 const handleCurrentChange = (val) => {
     currentPage.value = val
+}
+
+const fetchData = () => {
+    emits('refresh')
 }
 </script>
 
