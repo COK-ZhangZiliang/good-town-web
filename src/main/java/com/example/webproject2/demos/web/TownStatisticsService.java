@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -38,17 +39,19 @@ public class TownStatisticsService {
     /**
      * 获取乡镇统计数据
      */
-    public List<TownStatisticsDTO> getTownStatistics(LocalDateTime startDate, LocalDateTime endDate, String province, String city) {
+    public List<TownStatisticsDTO> getTownStatistics(YearMonth startMonth, YearMonth endMonth, String province, String city) {
         // 在查询前执行 SQL 脚本
         executeResetMonthlyScript();
 
         System.out.println("已执行 reset_monthly.sql 脚本");
 
-        // 将日期转换为 YYYYMM 格式
+        // 将 YearMonth 转换为 YYYYMM 格式
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMM");
-        String startMonth = startDate.format(formatter);
-        String endMonth = endDate.format(formatter);
+        String startMonthStr = startMonth.format(formatter);
+        String endMonthStr = endMonth.format(formatter);
 
-        return monthlySummaryRepository.findTownMonthlyStatistics(startMonth, endMonth, province, city);
+        // 执行查询
+        return monthlySummaryRepository.findTownMonthlyStatistics(startMonthStr, endMonthStr, province, city);
     }
+
 }

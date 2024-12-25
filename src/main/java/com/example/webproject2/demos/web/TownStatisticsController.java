@@ -4,9 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -19,14 +18,11 @@ public class TownStatisticsController {
 
     @GetMapping("/towns")
     public List<TownStatisticsDTO> getTownStatistics(
-            @RequestParam("startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam("startMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth startMonth,
+            @RequestParam("endMonth") @DateTimeFormat(pattern = "yyyy-MM") YearMonth endMonth,
             @RequestParam(value = "province", required = false) String province,
             @RequestParam(value = "city", required = false) String city
     ) {
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
-
         // 将空字符串转换为 null
         if (province != null && province.trim().isEmpty()) {
             province = null;
@@ -35,6 +31,7 @@ public class TownStatisticsController {
             city = null;
         }
 
-        return townStatisticsService.getTownStatistics(startDateTime, endDateTime, province, city);
+        // 调用服务方法并直接传递 YearMonth
+        return townStatisticsService.getTownStatistics(startMonth, endMonth, province, city);
     }
 }
