@@ -44,4 +44,8 @@ public class AssistanceService {
     public void deleteAssistanceById(Integer assistanceId) {
         assistanceRepository.deleteById(assistanceId);
     }
+
+    public List<Assistance> getAllAssistances() {
+        return assistanceRepository.findAll();
+    }
 }
