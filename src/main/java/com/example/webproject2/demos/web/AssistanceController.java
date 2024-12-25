@@ -630,4 +630,133 @@ public class AssistanceController {
             return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
         }
     }
+
+
+    // 搜索所有助力请求
+    @PostMapping("/search/all")
+    public ResponseEntity<?> searchAllAssistances(@RequestHeader("token") String token,
+                                                 @RequestBody Map<String, Object> requestBody)
+    {
+        try {
+            // 解析 token 获取 userId
+            if (token == null || token.isEmpty())
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请登录"));
+            Integer userId = TokenService.validateToken(token);
+            System.out.println("Decoded userId: " + userId);
+            if (userId == null) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "登录过期，请重新登录"));
+            }
+
+            // 获取搜索关键字
+            String keyword = (String) requestBody.get("keyword");
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "请输入搜索关键字"));
+            }
+            keyword = keyword.trim();
+
+            // 根据 userId 查询用户身份
+            Users user = userRepository.findById(userId).orElse(null);
+            if (user != null && user.getUserType() != 1) {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "无权限查看"));
+            }
+
+            // 查询所有助力请求
+            List<Assistance> assistanceList = assistanceService.getAllAssistances();
+
+            List<Map<String, Object>> responseData = new ArrayList<>();
+            for (Assistance assistance : assistanceList) {
+                if (assistance.getStatus() == 3)
+                    continue; // 跳过已取消
+
+                boolean match = false;
+
+                Map<String, Object> assistanceData = new HashMap<>();
+                assistanceData.put("assistance_id", assistance.getAssistanceId());
+                assistanceData.put("publicity_id", assistance.getPublicityId());
+                assistanceData.put("description", assistance.getDescription());
+
+                if (assistance.getDescription() != null && assistance.getDescription().contains(keyword)) {
+                    match = true;
+                }
+
+                // 处理 image_url 字段，分割为数组形式
+                String rawImageUrls = assistance.getImageUrl();
+                if (rawImageUrls != null && !rawImageUrls.trim().isEmpty()) {
+                    List<String> parsedImageUrls = Arrays.asList(rawImageUrls.split(";"));
+                    assistanceData.put("image_url", parsedImageUrls); // 转为列表形式
+                } else {
+                    assistanceData.put("image_url", Collections.emptyList()); // 空列表
+                }
+
+                // 处理 video_url 字段，分割为数组形式
+                String rawVideoUrls = assistance.getVideoUrl();
+                if (rawVideoUrls != null && !rawVideoUrls.trim().isEmpty()) {
+                    List<String> parsedVideoUrls = Arrays.asList(rawVideoUrls.split(";"));
+                    assistanceData.put("video_url", parsedVideoUrls); // 转为列表形式
+                } else {
+                    assistanceData.put("video_url", Collections.emptyList()); // 空列表
+                }
+
+                assistanceData.put("status", assistance.getStatus());
+                assistanceData.put("created_at", assistance.getCreatedAt());
+                assistanceData.put("updated_at", assistance.getUpdatedAt());
+
+                // 根据 publicityId 查询对应的 townId
+                Integer publicityId = assistance.getPublicityId();
+                if (publicityId != null) {
+                    Publicity publicity = publicityService.getPublicityById(publicityId);
+                    if (publicity != null) {
+                        Integer townId = publicity.getTownId();
+                        assistanceData.put("town_id", townId);
+
+                        // 根据 townId 查询详细的省市和 townName
+                        if (townId != null) {
+                            Towns town = townService.getTownById(townId); // 正确：通过注入的实例调用
+                            if (town != null) {
+                                assistanceData.put("province", town.getProvince());
+                                assistanceData.put("city", town.getCity());
+                                assistanceData.put("town_name", town.getTownName());
+
+                                if (town.getProvince().contains(keyword) ||
+                                        town.getCity().contains(keyword) ||
+                                        town.getTownName().contains(keyword)) {
+                                    match = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 获取助力者个人信息
+                Optional<Users> userOptional = userRepository.findById(userId);
+                if (userOptional.isPresent()) {
+                    user = userOptional.get();
+                    Map<String, Object> userData = new HashMap<>();
+                    userData.put("userId", user.getUserId());
+                    userData.put("username", user.getUsername());
+                    userData.put("phone", user.getPhone());
+                    userData.put("bio", user.getBio());
+                    userData.put("avatarUrl", user.getAvatarUrl());
+
+                    if (user.getUsername().contains(keyword)) {
+                        match = true;
+                    }
+
+                    // 将用户信息添加到宣传信息中
+                    assistanceData.put("user", userData);
+                }
+
+
+                if (match) {
+                    responseData.add(assistanceData);
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("status", "success", "data", responseData));
+
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("status", "error", "message", e.getMessage()));
+        }
+    }
 }
