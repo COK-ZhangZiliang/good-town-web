@@ -422,7 +422,7 @@ public class AssistanceController {
 
 
 
-    // 搜索助力信息
+    // 搜索自己助力信息
     @PostMapping("/search")
     public ResponseEntity<?> searchAssistances(@RequestHeader(value = "token", required = false) String headerToken,
                                                @RequestBody Map<String, Object> requestBody) {
@@ -606,6 +606,8 @@ public class AssistanceController {
                 }
 
                 // 获取助力者个人信息
+                userId = assistance.getUserId();
+                System.out.println("userId: " + userId);
                 Optional<Users> userOptional = userRepository.findById(userId);
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
@@ -728,6 +730,8 @@ public class AssistanceController {
                 }
 
                 // 获取助力者个人信息
+                userId = assistance.getUserId();
+                System.out.println("userId: " + userId);
                 Optional<Users> userOptional = userRepository.findById(userId);
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
