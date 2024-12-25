@@ -24,7 +24,7 @@
     </el-table>
 
     <div class="pagination">
-      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[5, 10, 20]"
+      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 30]"
         :total="total" layout="total, sizes, prev, pager, next" @size-change="handleSizeChange"
         @current-change="handleCurrentChange" />
     </div>
@@ -40,7 +40,7 @@ import { getToken } from '../utils/auth'
 const loading = ref(false)
 const userInfo = ref([])
 const currentPage = ref(1)
-const pageSize = ref(5)
+const pageSize = ref(10)
 const total = ref(0)
 
 // 获取所有用户信息
@@ -97,6 +97,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-list {
+  margin-top: 20px;
   padding: 20px;
   background: #fff;
   border-radius: 8px;
