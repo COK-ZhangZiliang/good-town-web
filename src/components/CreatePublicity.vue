@@ -127,6 +127,7 @@ const provinces = Object.keys(pcData)
 const cities = ref([])
 
 const handleProvinceChange = (value) => {
+    formData.city = ''
     cities.value = pcData[value] || []
 }
 

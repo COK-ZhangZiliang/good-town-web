@@ -328,8 +328,8 @@ const handleAvatarClick = () => {
   flex-wrap: wrap;
 
   .media-item {
-    width: 300px;
-    height: 225px;
+    width: 250px;
+    height: 190px;
     object-fit: cover;
     border-radius: 4px;
   }

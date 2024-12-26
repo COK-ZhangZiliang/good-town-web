@@ -215,6 +215,7 @@ const provinces = Object.keys(pcData)
 const cities = ref([])
 
 const handleProvinceChange = (value) => {
+  filters.value.city = ''
   cities.value = pcData[value] || []
 }
 </script>

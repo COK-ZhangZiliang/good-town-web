@@ -506,14 +506,14 @@ $hot-color: #ff6b6b;
 
 .content {
   flex: 1;
-  padding: 80px;
+  padding: 40px;
   padding-top: 20px;
   background-color: #f5f7fa;
   overflow-y: auto;
 }
 
 .right-sidebar {
-  width: 350px;
+  width: 250px;
   background-color: white;
   border-left: 1px solid $border-color;
   padding: 20px;
