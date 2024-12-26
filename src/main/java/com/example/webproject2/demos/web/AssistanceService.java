@@ -28,7 +28,7 @@ public class AssistanceService {
 
     // 根据用户ID查询助力请求
     public List<Assistance> getAssistanceByUserId(Integer userId) {
-        return assistanceRepository.findByUserIdOrderByUpdatedAt(userId);
+        return assistanceRepository.findByUserIdOrderByUpdatedAtDesc(userId);
     }
 
 
