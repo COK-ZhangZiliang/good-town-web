@@ -1,12 +1,15 @@
+### 版本
+```
+java17，jdk17，mvn3.9.9
+```
+
+
 ### 接口规范
 https://xvzjebnt164.feishu.cn/wiki/UmJmwvMaoiU7oNkOR4EcUncLnJb
 
-运行后端项目
-```
-src/main/java/com/example/webproject2/Webproject2Application.java
-```
+### 运行后端项目
 
-后端配置文件src/main/resources/application.properties
+后端配置文件被git忽略了，请自行添加 src/main/resources/application.properties
 ```application
 # 数据库连接（端口和密码根据实际情况调整）
 spring.datasource.url=jdbc:mysql://localhost:13306/test_database?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
@@ -50,4 +53,9 @@ spring.servlet.multipart.max-request-size=200MB
 # 静态资源访问路径
 spring.web.resources.static-locations=file:D:/program/web/webproject2/uploads/
 
+```
+
+直接运行下面的文件即可
+```
+src/main/java/com/example/webproject2/Webproject2Application.java
 ```
