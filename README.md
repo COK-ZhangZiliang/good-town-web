@@ -55,7 +55,7 @@ spring.web.resources.static-locations=file:D:/program/web/webproject2/uploads/
 
 ```
 
-直接运行下面的文件即可
+先运行数据库，再直接运行下面的文件即可
 ```
 src/main/java/com/example/webproject2/Webproject2Application.java
 ```
