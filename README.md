@@ -60,4 +60,4 @@ spring.web.resources.static-locations=file:D:/program/web/webproject2/uploads/
 src/main/java/com/example/webproject2/Webproject2Application.java
 ```
 
-注意静态资源访问的配置在`src/main/java/com/example/webproject2/demos/web/WebConfig.java`下
+注意：静态资源访问的配置在`src/main/java/com/example/webproject2/demos/web/WebConfig.java`下
